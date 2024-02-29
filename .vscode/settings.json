@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.strings": "xml",
+        "*.xm": "objective-c",
+        "*.h": "objective-c",
+        "optional": "cpp"
+    }
+}

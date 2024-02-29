@@ -1,0 +1,9 @@
+Package: com.dcproducts.libdcweather
+Name: libDCWeather
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome library of some sort!!
+Maintainer: Derek Calabro
+Author: Derek Calabro
+Section: System
+Tag: role::developer
