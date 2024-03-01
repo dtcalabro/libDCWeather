@@ -71,6 +71,7 @@ enum ConditionCode {
 	static dispatch_once_t p = 0;
 	static __strong libDCWeather *_sharedSelf = nil;
 	dispatch_once(&p, ^{
+        // Initialize the shared instance here
 		_sharedSelf = [[libDCWeather alloc] init];
         [_sharedSelf refreshLocation];
 	});
@@ -90,16 +91,19 @@ enum ConditionCode {
 - (void)refreshLocation {
     //debug_log("refreshLocation");
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Get the local weather city and update it
         WeatherPreferences *weatherPreferences = [WeatherPreferences sharedPreferences];
-        debug_log("isLocalWeatherEnabled: %d", [weatherPreferences isLocalWeatherEnabled]);
         _localWeatherCity = [weatherPreferences localWeatherCity];
         [_localWeatherCity update];
-        debug_log("locationServicesEnabled: %d", [CLLocationManager locationServicesEnabled]);
     });
 }
 
 - (BOOL)locationServicesEnabled {
     //debug_log("locationServicesEnabled");
+    debug_log("isLocalWeatherEnabled: %d", [[WeatherPreferences sharedPreferences] isLocalWeatherEnabled]);
+    debug_log("locationServicesEnabled: %d", [CLLocationManager locationServicesEnabled]);
+
+    // Check if local weather is enabled and location services are enabled
     if (![[WeatherPreferences sharedPreferences] isLocalWeatherEnabled] || ![CLLocationManager locationServicesEnabled]) {
         return NO;
     }
@@ -114,6 +118,7 @@ enum ConditionCode {
 - (NSString *)temperatureString {
     //debug_log("temperatureString");
 
+    // Check if location services are enabled
     if (![self locationServicesEnabled]) {
         return @"Temperature Not Available";
     }
@@ -127,6 +132,7 @@ enum ConditionCode {
 - (NSString *)conditionString {
     //debug_log("conditionString");
 
+    // Check if location services are enabled
     if (![self locationServicesEnabled]) {
         return @"Condition Not Available";
     }
@@ -134,6 +140,7 @@ enum ConditionCode {
     // Check for severe weather condition if enabled
     if (self.conditionIncludesSevereWeather) {
         if (_localWeatherCity.severeWeatherEvents.count > 0) {
+            // Currently only checking the first severe weather event, but I may change this in the future since there can be multiple events
             WFSevereWeatherEvent *severeWeatherEvent = _localWeatherCity.severeWeatherEvents[0];
             return severeWeatherEvent.eventDescription;
         }
@@ -269,6 +276,7 @@ enum ConditionCode {
 - (UIImage *)conditionImage {
     //debug_log("conditionImage");
 
+    // Check if location services are enabled
     if (![self locationServicesEnabled]) {
         return nil;
     }
@@ -394,6 +402,7 @@ enum ConditionCode {
 - (NSString *)cityString {
     //debug_log("cityString");
 
+    // Check if location services are enabled
     if (![self locationServicesEnabled]) {
         return @"City Not Available";
     }
