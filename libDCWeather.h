@@ -9,8 +9,9 @@
 @property (nonatomic, retain) City *localWeatherCity;
 
 + (instancetype)sharedInstance;
-- (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather;
 - (void)refreshLocation;
+- (BOOL)locationServicesEnabled;
+- (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather;
 - (NSString *)temperatureString;
 - (NSString *)conditionString;
 - (UIImage *)conditionImage;

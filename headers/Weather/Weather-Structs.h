@@ -143,9 +143,11 @@ typedef struct CAFrameRateRange {
 } CAFrameRateRange;
 */
 
+typedef CGFloat CLLocationDegrees;
+
 typedef struct CLLocationCoordinate2D {
-    CGFloat latitude;
-    CGFloat longitude;
+    CLLocationDegrees latitude;
+    CLLocationDegrees longitude;
 } CLLocationCoordinate2D;
 
 /*

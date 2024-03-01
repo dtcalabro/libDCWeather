@@ -2,6 +2,7 @@
 #import "libDCWeather.h"
 #import <os/log.h>
 #include <dlfcn.h>
+#import <CoreLocation/CoreLocation.h>
 
 #define DEGREE_SYMBOL @"\u00B0"
 
@@ -93,7 +94,16 @@ enum ConditionCode {
         debug_log("isLocalWeatherEnabled: %d", [weatherPreferences isLocalWeatherEnabled]);
         _localWeatherCity = [weatherPreferences localWeatherCity];
         [_localWeatherCity update];
+        debug_log("locationServicesEnabled: %d", [CLLocationManager locationServicesEnabled]);
     });
+}
+
+- (BOOL)locationServicesEnabled {
+    //debug_log("locationServicesEnabled");
+    if (![[WeatherPreferences sharedPreferences] isLocalWeatherEnabled] || ![CLLocationManager locationServicesEnabled]) {
+        return NO;
+    }
+    return YES;
 }
 
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather {
@@ -104,6 +114,10 @@ enum ConditionCode {
 - (NSString *)temperatureString {
     //debug_log("temperatureString");
 
+    if (![self locationServicesEnabled]) {
+        return @"Temperature Not Available";
+    }
+
     WFTemperature *temperature = [_localWeatherCity temperature];
     debug_log("City: %s, Temperature: %f %.0f%s", [_localWeatherCity.name UTF8String], temperature.fahrenheit, temperature.fahrenheit, [DEGREE_SYMBOL UTF8String]);
     return [NSString stringWithFormat:@"%.0f%@", temperature.fahrenheit, DEGREE_SYMBOL];
@@ -112,6 +126,10 @@ enum ConditionCode {
 
 - (NSString *)conditionString {
     //debug_log("conditionString");
+
+    if (![self locationServicesEnabled]) {
+        return @"Condition Not Available";
+    }
 
     // Check for severe weather condition if enabled
     if (self.conditionIncludesSevereWeather) {
@@ -251,6 +269,10 @@ enum ConditionCode {
 - (UIImage *)conditionImage {
     //debug_log("conditionImage");
 
+    if (![self locationServicesEnabled]) {
+        return nil;
+    }
+
     // Check for severe weather condition if enabled
     if (self.conditionIncludesSevereWeather) {
         if (_localWeatherCity.severeWeatherEvents.count > 0) {
@@ -371,6 +393,11 @@ enum ConditionCode {
 
 - (NSString *)cityString {
     //debug_log("cityString");
+
+    if (![self locationServicesEnabled]) {
+        return @"City Not Available";
+    }
+
     return _localWeatherCity.name;
 }
 
