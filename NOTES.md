@@ -2,6 +2,7 @@
 # Notes
 
 ## Condition Codes
+
     0  - Tornado
     1  - Tropical Storm
     2  - Hurricane
@@ -52,4 +53,5 @@
     47 - Isolated Thundershowers
 
 ## Other Findings
+
 - NSStringFromWeatherConditionCode actually works thru index 195, 0-47 are the actual conditions, 48-97 are the system image names for each condition, 98-147 are the system images names without fill for each condition, and I believe 148-195 are the NSImage names for each condition.
