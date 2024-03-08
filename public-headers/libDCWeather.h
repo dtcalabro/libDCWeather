@@ -1,7 +1,7 @@
 // public libDCWeather.h
 #import <Foundation/Foundation.h>
 
-@interface libDCWeather : NSObject
+@interface DCWeather : NSObject
 + (instancetype)sharedInstance;
 - (void)requestRefresh;
 - (void)setAutoUpdateInvervalInSeconds:(NSInteger)interval;

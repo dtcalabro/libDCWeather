@@ -69,14 +69,14 @@ enum ConditionCode {
     IsolatedThundershowers = 47
 };
 
-@implementation libDCWeather
+@implementation DCWeather
 
 + (instancetype)sharedInstance {
 	static dispatch_once_t p = 0;
-	static __strong libDCWeather *_sharedSelf = nil;
+	static __strong DCWeather *_sharedSelf = nil;
 	dispatch_once(&p, ^{
         // Initialize the shared instance here
-		_sharedSelf = [[libDCWeather alloc] init];
+		_sharedSelf = [[DCWeather alloc] init];
         [_sharedSelf setAutoUpdateInvervalInMinutes:5];
 	});
 	return _sharedSelf;

@@ -4,14 +4,13 @@
 #import <WeatherFoundation/WeatherFoundation.h>
 #import <CoreLocation/CoreLocation.h>
 
-@interface libDCWeather : NSObject <CLLocationManagerDelegate, CityUpdateObserver>
+@interface DCWeather : NSObject <CLLocationManagerDelegate, CityUpdateObserver>
 @property (nonatomic, strong) City *currentCity;
 @property (nonatomic, strong) WeatherLocationManager* weatherLocationManager;
 @property (nonatomic, strong) NSTimer *updateTimer;
 @property (nonatomic, retain) NSDate *nextUpdateTime;
 @property (nonatomic) BOOL conditionIncludesSevereWeather;
 @property (nonatomic) NSInteger updateInterval;
-
 + (instancetype)sharedInstance;
 - (void)requestRefresh;
 - (void)setAutoUpdateInvervalInSeconds:(NSInteger)interval;
