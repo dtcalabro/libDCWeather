@@ -90,6 +90,8 @@
 -(void)temperatureUnitObserver:(id)arg0 didChangeTemperatureUnitTo:(int)arg1 ;
 -(void)writeDefaultValue:(id)arg0 forKey:(id)arg1 ;
 
+-(void)setLocalWeatherEnabled:(BOOL)localWeatherEnabled;
+
 @end
 
 #endif

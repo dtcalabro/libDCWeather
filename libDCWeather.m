@@ -2,9 +2,13 @@
 #import "libDCWeather.h"
 #import <os/log.h>
 #include <dlfcn.h>
-#import <CoreLocation/CoreLocation.h>
+#import <objc/runtime.h>
 
 #define DEGREE_SYMBOL @"\u00B0"
+
+#define TEMPERATURE_CHANGE_NOTIFICATION @"kDCWeatherTemperatureChange"
+#define LOCATION_CHANGE_NOTIFICATION    @"kDCWeatherLocationChange"
+#define CONDITION_CHANGE_NOTIFICATION   @"kDCWeatherConditionChange"
 
 #define debug_log(...) ({\
 	if (LDCW_DEBUG) {\
@@ -73,7 +77,7 @@ enum ConditionCode {
 	dispatch_once(&p, ^{
         // Initialize the shared instance here
 		_sharedSelf = [[libDCWeather alloc] init];
-        [_sharedSelf refreshLocation];
+        [_sharedSelf setAutoUpdateInvervalInMinutes:5];
 	});
 	return _sharedSelf;
 }
@@ -83,25 +87,87 @@ enum ConditionCode {
     if (self) {
         // Initialization code here
         self.conditionIncludesSevereWeather = NO;
+        [self setAutoUpdateInvervalInMinutes:5];
+
+        self.weatherLocationManager = [objc_getClass("WeatherLocationManager") sharedWeatherLocationManager];
+        [self.weatherLocationManager setDelegate:self];
+        self.weatherLocationManager.updateInterval = self.updateInterval;
+        self.weatherLocationManager.locationUpdatesEnabled = YES;
+        self.weatherLocationManager.locationTrackingIsReady = YES;
+
+        // Start location tracking in Weather.framework
+        if ([self.weatherLocationManager respondsToSelector:@selector(setLocationTrackingReady:activelyTracking:watchKitExtension:)]) {
+            [self.weatherLocationManager setLocationTrackingReady:YES activelyTracking:NO watchKitExtension:NO];
+        }
+
+        if ([self locationServicesEnabled]) {
+            [self.weatherLocationManager setLocationTrackingActive:YES];
+            [[objc_getClass("WeatherPreferences") sharedPreferences] setLocalWeatherEnabled:YES];
+
+            // Force a new location update if possible
+            [self.weatherLocationManager forceLocationUpdate];
+        } else {
+            // Location services are not enabled, so enable them
+            // TODO: Implement a way to restore the original state after
+            //debug_log("Location services are not enabled");
+            [objc_getClass("CLLocationManager") setAuthorizationStatusByType:3 forBundleIdentifier:@"com.apple.weather"];
+
+            [self.weatherLocationManager setLocationTrackingActive:YES];
+            [[objc_getClass("WeatherPreferences") sharedPreferences] setLocalWeatherEnabled:YES];
+
+            // Force a new location update if possible
+            [self.weatherLocationManager forceLocationUpdate];
+        }
+
         [self refreshLocation];
+
+        // Start the update timer with the full interval
+        [self _restartTimerWithInterval:self.updateInterval];
     }
     return self;
+}
+
+- (void)dealloc {
+    // Remove observers
+    [self.currentCity removeObserver:self forKeyPath:@"temperature"];
+    [self.currentCity removeObserver:self forKeyPath:@"location"];
+    [self.currentCity removeObserver:self forKeyPath:@"conditionCode"];
 }
 
 - (void)refreshLocation {
     //debug_log("refreshLocation");
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Force a new location update if possible
+        [self.weatherLocationManager forceLocationUpdate];
+
         // Get the local weather city and update it
-        WeatherPreferences *weatherPreferences = [WeatherPreferences sharedPreferences];
-        _localWeatherCity = [weatherPreferences localWeatherCity];
-        [_localWeatherCity update];
+        //WeatherPreferences *weatherPreferences = [WeatherPreferences sharedPreferences];
+        WeatherPreferences *weatherPreferences = [[WeatherPreferences alloc] init];
+        [weatherPreferences setLocalWeatherEnabled:YES];
+
+        self.currentCity = [weatherPreferences localWeatherCity];
+        [self.currentCity update];
+        
+        // Add observers
+        [self.currentCity addObserver:self
+            forKeyPath:@"temperature"
+            options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+            context:NULL];
+        [self.currentCity addObserver:self
+            forKeyPath:@"location"
+            options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+            context:NULL];
+        [self.currentCity addObserver:self
+            forKeyPath:@"conditionCode"
+            options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+            context:NULL];
+
+        [self requestRefresh];
     });
 }
 
 - (BOOL)locationServicesEnabled {
     //debug_log("locationServicesEnabled");
-    debug_log("isLocalWeatherEnabled: %d", [[WeatherPreferences sharedPreferences] isLocalWeatherEnabled]);
-    debug_log("locationServicesEnabled: %d", [CLLocationManager locationServicesEnabled]);
 
     // Check if local weather is enabled and location services are enabled
     if (![[WeatherPreferences sharedPreferences] isLocalWeatherEnabled] || ![CLLocationManager locationServicesEnabled]) {
@@ -115,63 +181,121 @@ enum ConditionCode {
     _conditionIncludesSevereWeather = conditionIncludesSevereWeather;
 }
 
+- (void)setAutoUpdateInvervalInSeconds:(NSInteger)interval {
+    //debug_log("setAutoUpdateInvervalInSeconds");
+    self.updateInterval = interval;
+    self.weatherLocationManager.updateInterval = self.updateInterval;
+    [self _restartTimerWithInterval:interval];
+}
+
+- (void)setAutoUpdateInvervalInMinutes:(NSInteger)interval {
+    //debug_log("setAutoUpdateInvervalInMinutes");
+    self.updateInterval = interval * 60;
+    self.weatherLocationManager.updateInterval = self.updateInterval;
+    [self _restartTimerWithInterval:self.updateInterval];
+}
+
+- (void)setAutoUpdateInvervalInHours:(NSInteger)interval {
+    //debug_log("setAutoUpdateInvervalInHours");
+    self.updateInterval = interval * 60 * 60;
+    self.weatherLocationManager.updateInterval = self.updateInterval;
+    [self _restartTimerWithInterval:self.updateInterval];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSKeyValueChangeKey,id> *)change
+                       context:(void *)context {
+    // If the old and new values are the same, do nothing
+    if (change[NSKeyValueChangeOldKey] == change[NSKeyValueChangeNewKey])
+        return;
+
+    if ([keyPath isEqualToString:@"temperature"]) {
+        // The temperature has changed
+        //debug_log("Temperature has changed");
+        [[NSNotificationCenter defaultCenter] postNotificationName:TEMPERATURE_CHANGE_NOTIFICATION object:self];
+    } else if ([keyPath isEqualToString:@"location"]) {
+        // The location has changed
+        //debug_log("Location has changed");
+        [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
+    } else if ([keyPath isEqualToString:@"conditionCode"]) {
+        // The conditionCode has changed
+        //debug_log("Condition code has changed");
+        [[NSNotificationCenter defaultCenter] postNotificationName:CONDITION_CHANGE_NOTIFICATION object:self];
+    }
+}
+
+- (void)requestRefresh {
+    [self _refreshWeather];
+    
+    // And restart the update timer with the full interval
+    [self _restartTimerWithInterval:self.updateInterval];
+}
+
+- (void)_restartTimerWithInterval:(NSTimeInterval)interval {
+    if (self.updateTimer)
+        [self.updateTimer invalidate];
+    
+    self.updateTimer = [NSTimer scheduledTimerWithTimeInterval:interval
+                                                        target:self
+                                                      selector:@selector(_updateTimerFired:)
+                                                      userInfo:nil
+                                                       repeats:NO];
+    
+    self.nextUpdateTime = [[NSDate date] dateByAddingTimeInterval:interval];
+
+    //NSLog(@"[LDCW_DEBUG] Next update time: %@", self.nextUpdateTime);
+}
+
+- (void)_refreshWeather {
+    //NSLog(@"[LDCW_DEBUG] Refreshing weather, location: %@", self.currentCity.location);
+    [self _refreshWeatherWithLocation:self.currentCity.location];
+}
+
+- (void)_refreshWeatherWithLocation:(CLLocation*)location {
+    // Set update delegate
+    if ([self.currentCity respondsToSelector:@selector(associateWithDelegate:)])
+        [self.currentCity associateWithDelegate:self];
+    else if ([self.currentCity respondsToSelector:@selector(addUpdateObserver:)])
+        [self.currentCity addUpdateObserver:self];
+    
+    // Force a location update
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        TWCLocationUpdater *locationUpdater = [objc_getClass("TWCLocationUpdater") sharedLocationUpdater];
+        [locationUpdater updateWeatherForLocation:location city:self.currentCity];
+    });
+}
+
 - (NSString *)temperatureString {
     //debug_log("temperatureString");
 
     // Check if location services are enabled
-    if (![self locationServicesEnabled]) {
+    if (![self locationServicesEnabled])
         return @"Temperature Not Available";
-    }
 
-    WFTemperature *temperature = [_localWeatherCity temperature];
-    debug_log("City: %s, Temperature: %f %.0f%s", [_localWeatherCity.name UTF8String], temperature.fahrenheit, temperature.fahrenheit, [DEGREE_SYMBOL UTF8String]);
+    WFTemperature *temperature = [self.currentCity temperature];
+    //debug_log("City: %s, Temperature: %f %.0f%s", [self.currentCity.name UTF8String], temperature.fahrenheit, temperature.fahrenheit, [DEGREE_SYMBOL UTF8String]);
     return [NSString stringWithFormat:@"%.0f%@", temperature.fahrenheit, DEGREE_SYMBOL];
-
 }
 
 - (NSString *)conditionString {
     //debug_log("conditionString");
 
     // Check if location services are enabled
-    if (![self locationServicesEnabled]) {
+    if (![self locationServicesEnabled])
         return @"Condition Not Available";
-    }
 
     // Check for severe weather condition if enabled
     if (self.conditionIncludesSevereWeather) {
-        if (_localWeatherCity.severeWeatherEvents.count > 0) {
+        if (self.currentCity.severeWeatherEvents.count > 0) {
             // Currently only checking the first severe weather event, but I may change this in the future since there can be multiple events
-            WFSevereWeatherEvent *severeWeatherEvent = _localWeatherCity.severeWeatherEvents[0];
+            WFSevereWeatherEvent *severeWeatherEvent = self.currentCity.severeWeatherEvents[0];
             return severeWeatherEvent.eventDescription;
         }
     }
 
-    //debug_log("%s", [[_localWeatherCity naturalLanguageDescription] UTF8String]);
-
-    //debug_log("wind speed: %f", _localWeatherCity.windSpeed);
-
-    // Manually check wind speed for windy condition
-    if (_localWeatherCity.windSpeed > 15) {
-        //return @"Windy";
-    }
-
-    /*
-    NSString *(*NSStringFromWeatherConditionCode)(int code);
-
-    void *handle = dlopen("/System/Library/PrivateFrameworks/Weather.framework/Weather", RTLD_LAZY);
-    if (handle) {
-        NSStringFromWeatherConditionCode = dlsym(handle, "NSStringFromWeatherConditionCode");
-        if (NSStringFromWeatherConditionCode) {
-            for (int i = 0; i < 195; i++) {
-                NSString *conditionString = NSStringFromWeatherConditionCode(i);
-                debug_log("%i - conditionString: %s", i, [conditionString UTF8String]);
-            }
-        }
-    }
-    */
-
     // Check for regular weather condition
-    switch (_localWeatherCity.conditionCode) {
+    switch (self.currentCity.conditionCode) {
         case Tornado:                                       // 0
             return @"Tornado";
         case TropicalStorm:                                 // 1
@@ -239,7 +363,7 @@ enum ConditionCode {
         case Sunny:                                         // 32
             return @"Sunny";
         case MostlySunnyNight:                              // 33
-            return @"Mostly Sunny";
+            return @"Mostly Clear";
         case MostlySunny:                                   // 34
             return @"Mostly Sunny";
         case MixedRainFall:                                 // 35
@@ -269,7 +393,7 @@ enum ConditionCode {
         case IsolatedThundershowers:                        // 47
             return @"Isolated Thundershowers";
         default:
-            return [NSString stringWithFormat:@"Unknown (%ld)", _localWeatherCity.conditionCode];
+            return [NSString stringWithFormat:@"Unknown (%ld)", self.currentCity.conditionCode];
     }
 }
 
@@ -277,27 +401,19 @@ enum ConditionCode {
     //debug_log("conditionImage");
 
     // Check if location services are enabled
-    if (![self locationServicesEnabled]) {
+    if (![self locationServicesEnabled])
         return nil;
-    }
 
     // Check for severe weather condition if enabled
     if (self.conditionIncludesSevereWeather) {
-        if (_localWeatherCity.severeWeatherEvents.count > 0) {
-            WFSevereWeatherEvent *severeWeatherEvent = _localWeatherCity.severeWeatherEvents[0];
+        if (self.currentCity.severeWeatherEvents.count > 0) {
+            WFSevereWeatherEvent *severeWeatherEvent = self.currentCity.severeWeatherEvents[0];
             // TODO: Add severe weather condition images
         }
     }
 
-    /*
-    // Manually check wind speed for windy condition
-    if (_localWeatherCity.windSpeed > 15) {
-        return [UIImage systemImageNamed:@"wind"];
-    }
-    */
-
     // Check for regular weather condition
-    switch (_localWeatherCity.conditionCode) {
+    switch (self.currentCity.conditionCode) {
         case Tornado:                                                                   // 0
             return [UIImage systemImageNamed:@"tornado"];
         case TropicalStorm:                                                             // 1
@@ -403,11 +519,54 @@ enum ConditionCode {
     //debug_log("cityString");
 
     // Check if location services are enabled
-    if (![self locationServicesEnabled]) {
+    if (![self locationServicesEnabled])
         return @"City Not Available";
-    }
 
-    return _localWeatherCity.name;
+    return self.currentCity.name;
+}
+
+#pragma mark CLLocationManagerDelegate methods
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray*)locations {
+    //debug_log("didUpdateLocations");
+    if (locations.count > 0) {
+        CLLocation *newestLocation = [locations lastObject];
+        //debug_log("Newest location: %f, %f", newestLocation.coordinate.latitude, newestLocation.coordinate.longitude);
+        
+        // Check if the location has changed
+        if (newestLocation.coordinate.latitude == self.currentCity.latitude && newestLocation.coordinate.longitude == self.currentCity.longitude)
+            // TODO: Figure out a better way to check this
+            return;
+
+        // Get an update for this change!
+        [self _refreshWeatherWithLocation:newestLocation];
+    }
+}
+
+#pragma mark City delegate methods
+
+-(void)cityDidStartWeatherUpdate:(id)city {
+    // Nothing to do here currently.
+    //debug_log("cityDidStartWeatherUpdate");
+}
+
+-(void)cityDidFinishWeatherUpdate:(City*)city {
+    //debug_log("cityDidFinishWeatherUpdate");
+
+    //NSLog(@"[LDCW_DEBUG] currentCity: %@", self.currentCity);
+    //NSLog(@"[LDCW_DEBUG] currentCity.location: %@", self.currentCity.location);
+    //NSLog(@"[LDCW_DEBUG] currentCity.locationID: %@", self.currentCity.locationID);
+    //NSLog(@"[LDCW_DEBUG] city: %@", city);
+    //NSLog(@"[LDCW_DEBUG] city.location: %@", city.location);
+    //NSLog(@"[LDCW_DEBUG] city.locationID: %@", city.locationID);
+
+    if ([self.currentCity isEqual:city] || [self.currentCity.locationID isEqualToString:city.locationID])
+        return;
+
+    // New data, so update!
+    self.currentCity = city;
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
 }
 
 @end

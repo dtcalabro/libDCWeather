@@ -142,6 +142,10 @@
 -(void)updateCityForSevereWeatherEvents:(id)arg0 ;
 -(void)updateTimeZoneWithCompletionBlock:(id)arg0 ;
 
+-(void)setCityUpdateObservers:(NSHashTable *)arg0 ;
+-(NSHashTable *)cityUpdateObservers;
+-(void)associateWithDelegate:(id)delegate;
+
 @end
 
 #endif
