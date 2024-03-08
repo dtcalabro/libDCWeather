@@ -1,4 +1,5 @@
 // DCDistance.h
+#import <Foundation/Foundation.h>
 
 @interface DCDistance : NSObject
 @property (nonatomic) double distance;
