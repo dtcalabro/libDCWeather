@@ -4,6 +4,7 @@
 #import <WeatherFoundation/WeatherFoundation.h>
 #import <CoreLocation/CoreLocation.h>
 #import "DCDistance.h"
+#import "DCTime.h"
 
 @interface DCWeather : NSObject <CLLocationManagerDelegate, CityUpdateObserver>
 @property (nonatomic, strong) City *currentCity;
@@ -12,7 +13,7 @@
 @property (nonatomic, strong) NSTimer *updateTimer;
 @property (nonatomic, retain) NSDate *nextUpdateTime;
 @property (nonatomic) BOOL conditionIncludesSevereWeather;
-@property (nonatomic) NSInteger updateInterval;
+@property (nonatomic) DCTime *updateInterval;
 @property (nonatomic) DCDistance *distanceThreshold;
 + (instancetype)sharedInstance;
 - (void)requestRefresh;

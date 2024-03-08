@@ -93,7 +93,7 @@ enum ConditionCode {
 
         self.weatherLocationManager = [objc_getClass("WeatherLocationManager") sharedWeatherLocationManager];
         [self.weatherLocationManager setDelegate:self];
-        self.weatherLocationManager.updateInterval = self.updateInterval;
+        self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
         self.weatherLocationManager.locationUpdatesEnabled = YES;
         self.weatherLocationManager.locationTrackingIsReady = YES;
 
@@ -123,7 +123,7 @@ enum ConditionCode {
         [self refreshLocation];
 
         // Start the update timer with the full interval
-        [self _restartTimerWithInterval:self.updateInterval];
+        [self _restartTimerWithInterval:[self.updateInterval seconds]];
     }
     return self;
 }
@@ -184,23 +184,23 @@ enum ConditionCode {
 
 - (void)setAutoUpdateInvervalInSeconds:(NSInteger)interval {
     //debug_log("setAutoUpdateInvervalInSeconds");
-    self.updateInterval = interval;
-    self.weatherLocationManager.updateInterval = self.updateInterval;
-    [self _restartTimerWithInterval:interval];
+    self.updateInterval = [[DCTime alloc] initWithSeconds:interval];
+    self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
+    [self _restartTimerWithInterval:[self.updateInterval seconds]];
 }
 
 - (void)setAutoUpdateInvervalInMinutes:(NSInteger)interval {
     //debug_log("setAutoUpdateInvervalInMinutes");
-    self.updateInterval = interval * 60;
-    self.weatherLocationManager.updateInterval = self.updateInterval;
-    [self _restartTimerWithInterval:self.updateInterval];
+    self.updateInterval = [[DCTime alloc] initWithMinutes:interval];
+    self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
+    [self _restartTimerWithInterval:[self.updateInterval seconds]];
 }
 
 - (void)setAutoUpdateInvervalInHours:(NSInteger)interval {
     //debug_log("setAutoUpdateInvervalInHours");
-    self.updateInterval = interval * 60 * 60;
-    self.weatherLocationManager.updateInterval = self.updateInterval;
-    [self _restartTimerWithInterval:self.updateInterval];
+    self.updateInterval = [[DCTime alloc] initWithHours:interval];
+    self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
+    [self _restartTimerWithInterval:[self.updateInterval seconds]];
 }
 
 - (void)setDistanceThresholdToConsiderLocationChangeInMeters:(double)distanceThreshold {
@@ -255,7 +255,7 @@ enum ConditionCode {
     [self _refreshWeather];
     
     // And restart the update timer with the full interval
-    [self _restartTimerWithInterval:self.updateInterval];
+    [self _restartTimerWithInterval:[self.updateInterval seconds]];
 }
 
 - (void)_restartTimerWithInterval:(NSTimeInterval)interval {
@@ -269,12 +269,9 @@ enum ConditionCode {
                                                        repeats:NO];
     
     self.nextUpdateTime = [[NSDate date] dateByAddingTimeInterval:interval];
-
-    //NSLog(@"[LDCW_DEBUG] Next update time: %@", self.nextUpdateTime);
 }
 
 - (void)_refreshWeather {
-    //NSLog(@"[LDCW_DEBUG] Refreshing weather, location: %@", self.currentCity.location);
     [self _refreshWeatherWithLocation:self.currentCity.location];
 }
 
@@ -556,21 +553,6 @@ enum ConditionCode {
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray*)locations {
     //debug_log("didUpdateLocations");
-    /*
-    if (locations.count > 0) {
-        CLLocation *newestLocation = [locations lastObject];
-        //debug_log("Newest location: %f, %f", newestLocation.coordinate.latitude, newestLocation.coordinate.longitude);
-        
-        // Check if the location has changed
-        if (newestLocation.coordinate.latitude == self.currentCity.latitude && newestLocation.coordinate.longitude == self.currentCity.longitude)
-            // TODO: Figure out a better way to check this
-            return;
-
-        // Get an update for this change!
-        [self _refreshWeatherWithLocation:newestLocation];
-    }
-    */
-
     if (locations.count > 0) {
         CLLocation *newestLocation = [locations lastObject];
         //debug_log("Current location: (%f, %f), Newest location: (%f, %f)", self.currentLocation.coordinate.latitude, self.currentLocation.coordinate.longitude, newestLocation.coordinate.latitude, newestLocation.coordinate.longitude);
@@ -583,7 +565,6 @@ enum ConditionCode {
             DCDistance *distance = [[DCDistance alloc] initWithMeters:[newestLocation distanceFromLocation:self.currentLocation]];
             //debug_log("Distance: %f m, %f km, %f ft, %f yd, %f miles", [distance meters], [distance kilometers], [distance feet], [distance yards], [distance miles]);
             //debug_log("Distance threshold: %f m, %f km, %f ft, %f yd, %f miles", [self.distanceThreshold meters], [self.distanceThreshold kilometers], [self.distanceThreshold feet], [self.distanceThreshold yards], [self.distanceThreshold miles]);
-            //if (distance < 15.24) { // less than 50 feet
             if ([distance meters] < [self.distanceThreshold meters]) { // less than threshold
                 //NSLog(@"[LDCW_DEBUG] Location has not changed enough to warrant a weather update");
                 return;
