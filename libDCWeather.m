@@ -273,6 +273,7 @@ enum ConditionCode {
     if (![self locationServicesEnabled])
         return @"Temperature Not Available";
 
+    // TODO: Add check for default temperature unit and use that instead of always using Fahrenheit
     WFTemperature *temperature = [self.currentCity temperature];
     //debug_log("City: %s, Temperature: %f %.0f%s", [self.currentCity.name UTF8String], temperature.fahrenheit, temperature.fahrenheit, [DEGREE_SYMBOL UTF8String]);
     return [NSString stringWithFormat:@"%.0f%@", temperature.fahrenheit, DEGREE_SYMBOL];
@@ -407,8 +408,8 @@ enum ConditionCode {
     // Check for severe weather condition if enabled
     if (self.conditionIncludesSevereWeather) {
         if (self.currentCity.severeWeatherEvents.count > 0) {
-            WFSevereWeatherEvent *severeWeatherEvent = self.currentCity.severeWeatherEvents[0];
-            // TODO: Add severe weather condition images
+            // Return warning icon for any severe weather event, but I may change this in the future since some events have their own icons
+            return [UIImage systemImageNamed:@"exclamationmark.triangle.fill"];
         }
     }
 
