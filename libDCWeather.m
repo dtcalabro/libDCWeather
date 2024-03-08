@@ -78,6 +78,7 @@ enum ConditionCode {
         // Initialize the shared instance here
 		_sharedSelf = [[DCWeather alloc] init];
         [_sharedSelf setAutoUpdateInvervalInMinutes:5];
+        [_sharedSelf setDistanceThresholdToConsiderLocationChangeInMiles:1];
 	});
 	return _sharedSelf;
 }
@@ -88,6 +89,7 @@ enum ConditionCode {
         // Initialization code here
         self.conditionIncludesSevereWeather = NO;
         [self setAutoUpdateInvervalInMinutes:5];
+        [self setDistanceThresholdToConsiderLocationChangeInMiles:1];
 
         self.weatherLocationManager = [objc_getClass("WeatherLocationManager") sharedWeatherLocationManager];
         [self.weatherLocationManager setDelegate:self];
@@ -96,9 +98,8 @@ enum ConditionCode {
         self.weatherLocationManager.locationTrackingIsReady = YES;
 
         // Start location tracking in Weather.framework
-        if ([self.weatherLocationManager respondsToSelector:@selector(setLocationTrackingReady:activelyTracking:watchKitExtension:)]) {
+        if ([self.weatherLocationManager respondsToSelector:@selector(setLocationTrackingReady:activelyTracking:watchKitExtension:)])
             [self.weatherLocationManager setLocationTrackingReady:YES activelyTracking:NO watchKitExtension:NO];
-        }
 
         if ([self locationServicesEnabled]) {
             [self.weatherLocationManager setLocationTrackingActive:YES];
@@ -200,6 +201,31 @@ enum ConditionCode {
     self.updateInterval = interval * 60 * 60;
     self.weatherLocationManager.updateInterval = self.updateInterval;
     [self _restartTimerWithInterval:self.updateInterval];
+}
+
+- (void)setDistanceThresholdToConsiderLocationChangeInMeters:(double)distanceThreshold {
+    //debug_log("setDistanceThresholdToConsiderLocationChangeInMeters");
+    self.distanceThreshold = [[DCDistance alloc] initWithMeters:distanceThreshold];
+}
+
+- (void)setDistanceThresholdToConsiderLocationChangeInKilometers:(double)distanceThreshold {
+    //debug_log("setDistanceThresholdToConsiderLocationChangeInKilometers");
+    self.distanceThreshold = [[DCDistance alloc] initWithKilometers:distanceThreshold];
+}
+
+- (void)setDistanceThresholdToConsiderLocationChangeInFeet:(double)distanceThreshold {
+    //debug_log("setDistanceThresholdToConsiderLocationChangeInFeet");
+    self.distanceThreshold = [[DCDistance alloc] initWithFeet:distanceThreshold];
+}
+
+- (void)setDistanceThresholdToConsiderLocationChangeInYards:(double)distanceThreshold {
+    //debug_log("setDistanceThresholdToConsiderLocationChangeInYards");
+    self.distanceThreshold = [[DCDistance alloc] initWithYards:distanceThreshold];
+}
+
+- (void)setDistanceThresholdToConsiderLocationChangeInMiles:(double)distanceThreshold {
+    //debug_log("setDistanceThresholdToConsiderLocationChangeInMiles");
+    self.distanceThreshold = [[DCDistance alloc] initWithMiles:distanceThreshold];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -530,6 +556,7 @@ enum ConditionCode {
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray*)locations {
     //debug_log("didUpdateLocations");
+    /*
     if (locations.count > 0) {
         CLLocation *newestLocation = [locations lastObject];
         //debug_log("Newest location: %f, %f", newestLocation.coordinate.latitude, newestLocation.coordinate.longitude);
@@ -538,6 +565,32 @@ enum ConditionCode {
         if (newestLocation.coordinate.latitude == self.currentCity.latitude && newestLocation.coordinate.longitude == self.currentCity.longitude)
             // TODO: Figure out a better way to check this
             return;
+
+        // Get an update for this change!
+        [self _refreshWeatherWithLocation:newestLocation];
+    }
+    */
+
+    if (locations.count > 0) {
+        CLLocation *newestLocation = [locations lastObject];
+        //debug_log("Current location: (%f, %f), Newest location: (%f, %f)", self.currentLocation.coordinate.latitude, self.currentLocation.coordinate.longitude, newestLocation.coordinate.latitude, newestLocation.coordinate.longitude);
+        
+        // Check if the location has changed
+        if (self.currentLocation == nil) {
+            // First time getting a location, so save location and update weather
+            self.currentLocation = newestLocation;
+        } else {
+            DCDistance *distance = [[DCDistance alloc] initWithMeters:[newestLocation distanceFromLocation:self.currentLocation]];
+            //debug_log("Distance: %f m, %f km, %f ft, %f yd, %f miles", [distance meters], [distance kilometers], [distance feet], [distance yards], [distance miles]);
+            //debug_log("Distance threshold: %f m, %f km, %f ft, %f yd, %f miles", [self.distanceThreshold meters], [self.distanceThreshold kilometers], [self.distanceThreshold feet], [self.distanceThreshold yards], [self.distanceThreshold miles]);
+            //if (distance < 15.24) { // less than 50 feet
+            if ([distance meters] < [self.distanceThreshold meters]) { // less than threshold
+                //NSLog(@"[LDCW_DEBUG] Location has not changed enough to warrant a weather update");
+                return;
+            } else {
+                self.currentLocation = newestLocation;
+            }
+        }
 
         // Get an update for this change!
         [self _refreshWeatherWithLocation:newestLocation];
@@ -561,8 +614,8 @@ enum ConditionCode {
     //NSLog(@"[LDCW_DEBUG] city.location: %@", city.location);
     //NSLog(@"[LDCW_DEBUG] city.locationID: %@", city.locationID);
 
-    if ([self.currentCity isEqual:city] || [self.currentCity.locationID isEqualToString:city.locationID])
-        return;
+    //if ([self.currentCity isEqual:city] || [self.currentCity.locationID isEqualToString:city.locationID])
+    //    return;
 
     // New data, so update!
     self.currentCity = city;

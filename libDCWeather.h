@@ -3,19 +3,27 @@
 #import <Weather/Weather.h>
 #import <WeatherFoundation/WeatherFoundation.h>
 #import <CoreLocation/CoreLocation.h>
+#import "DCDistance.h"
 
 @interface DCWeather : NSObject <CLLocationManagerDelegate, CityUpdateObserver>
 @property (nonatomic, strong) City *currentCity;
+@property (nonatomic, strong) CLLocation *currentLocation; 
 @property (nonatomic, strong) WeatherLocationManager* weatherLocationManager;
 @property (nonatomic, strong) NSTimer *updateTimer;
 @property (nonatomic, retain) NSDate *nextUpdateTime;
 @property (nonatomic) BOOL conditionIncludesSevereWeather;
 @property (nonatomic) NSInteger updateInterval;
+@property (nonatomic) DCDistance *distanceThreshold;
 + (instancetype)sharedInstance;
 - (void)requestRefresh;
 - (void)setAutoUpdateInvervalInSeconds:(NSInteger)interval;
 - (void)setAutoUpdateInvervalInMinutes:(NSInteger)interval;
 - (void)setAutoUpdateInvervalInHours:(NSInteger)interval;
+- (void)setDistanceThresholdToConsiderLocationChangeInMeters:(double)distanceThreshold;
+- (void)setDistanceThresholdToConsiderLocationChangeInKilometers:(double)distanceThreshold;
+- (void)setDistanceThresholdToConsiderLocationChangeInFeet:(double)distanceThreshold;
+- (void)setDistanceThresholdToConsiderLocationChangeInYards:(double)distanceThreshold;
+- (void)setDistanceThresholdToConsiderLocationChangeInMiles:(double)distanceThreshold;
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather;
 - (NSString *)temperatureString;
 - (NSString *)conditionString;

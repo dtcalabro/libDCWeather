@@ -1,6 +1,6 @@
 LIBRARY_NAME = libDCWeather
 
-$(LIBRARY_NAME)_FILES = libDCWeather.m
+$(LIBRARY_NAME)_FILES = $(wildcard *.m)
 $(LIBRARY_NAME)_CFLAGS = -fobjc-arc -I$(THEOS_PROJECT_DIR)/headers -ferror-limit=0
 #$(LIBRARY_NAME)_CFLAGS = -fobjc-arc -ferror-limit=0
 $(LIBRARY_NAME)_FRAMEWORKS = UIKit CoreLocation
