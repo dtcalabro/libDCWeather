@@ -5,6 +5,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import "DCDistance.h"
 #import "DCTime.h"
+#import "DCTemperature.h"
 
 @interface DCWeather : NSObject <CLLocationManagerDelegate, CityUpdateObserver>
 @property (nonatomic, strong) City *currentCity;
@@ -16,7 +17,10 @@
 @property (nonatomic) DCTime *updateInterval;
 @property (nonatomic) DCDistance *distanceThreshold;
 + (instancetype)sharedInstance;
+- (void)refreshLocation;
 - (void)requestRefresh;
+- (BOOL)locationServicesEnabled;
+- (BOOL)locationAuthorizationAlways;
 - (void)setAutoUpdateInvervalInSeconds:(NSInteger)interval;
 - (void)setAutoUpdateInvervalInMinutes:(NSInteger)interval;
 - (void)setAutoUpdateInvervalInHours:(NSInteger)interval;

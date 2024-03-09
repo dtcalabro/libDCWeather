@@ -111,7 +111,8 @@ enum ConditionCode {
             // Location services are not enabled, so enable them
             // TODO: Implement a way to restore the original state after
             //debug_log("Location services are not enabled");
-            [objc_getClass("CLLocationManager") setAuthorizationStatusByType:3 forBundleIdentifier:@"com.apple.weather"];
+            //int origAuthStatus = [objc_getClass("CLLocationManager") authorizationStatusForBundleIdentifier:@"com.apple.weather"];
+            //[objc_getClass("CLLocationManager") setAuthorizationStatusByType:3 forBundleIdentifier:@"com.apple.weather"];
 
             [self.weatherLocationManager setLocationTrackingActive:YES];
             [[objc_getClass("WeatherPreferences") sharedPreferences] setLocalWeatherEnabled:YES];
@@ -175,6 +176,19 @@ enum ConditionCode {
         return NO;
     }
     return YES;
+}
+
+- (BOOL)locationAuthorizationAlways {
+    //debug_log("locationAuthorizationAlways");
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return NO;
+
+    // Check if location services are authorized
+    if ([objc_getClass("CLLocationManager") authorizationStatusForBundleIdentifier:@"com.apple.weather"] == kCLAuthorizationStatusAuthorizedAlways)
+        return YES;
+    return NO;
 }
 
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather {
@@ -281,7 +295,7 @@ enum ConditionCode {
         [self.currentCity associateWithDelegate:self];
     else if ([self.currentCity respondsToSelector:@selector(addUpdateObserver:)])
         [self.currentCity addUpdateObserver:self];
-    
+
     // Force a location update
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         TWCLocationUpdater *locationUpdater = [objc_getClass("TWCLocationUpdater") sharedLocationUpdater];
@@ -296,10 +310,9 @@ enum ConditionCode {
     if (![self locationServicesEnabled])
         return @"Temperature Not Available";
 
-    // TODO: Add check for default temperature unit and use that instead of always using Fahrenheit
-    WFTemperature *temperature = [self.currentCity temperature];
-    //debug_log("City: %s, Temperature: %f %.0f%s", [self.currentCity.name UTF8String], temperature.fahrenheit, temperature.fahrenheit, [DEGREE_SYMBOL UTF8String]);
-    return [NSString stringWithFormat:@"%.0f%@", temperature.fahrenheit, DEGREE_SYMBOL];
+    DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity temperature].fahrenheit];
+    //debug_log("City: %s, Temperature: %f %.0f%s", [self.currentCity.name UTF8String], [temperature temperatureInFahrenheit], [temperature temperatureInFahrenheit], [DEGREE_SYMBOL UTF8String]);
+    return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUserUnit], DEGREE_SYMBOL];
 }
 
 - (NSString *)conditionString {
@@ -580,12 +593,12 @@ enum ConditionCode {
 
 #pragma mark City delegate methods
 
--(void)cityDidStartWeatherUpdate:(id)city {
+- (void)cityDidStartWeatherUpdate:(id)city {
     // Nothing to do here currently.
     //debug_log("cityDidStartWeatherUpdate");
 }
 
--(void)cityDidFinishWeatherUpdate:(City*)city {
+- (void)cityDidFinishWeatherUpdate:(City*)city {
     //debug_log("cityDidFinishWeatherUpdate");
 
     //NSLog(@"[LDCW_DEBUG] currentCity: %@", self.currentCity);
