@@ -436,8 +436,13 @@ enum ConditionCode {
     // Check for severe weather condition if enabled
     if (self.conditionIncludesSevereWeather) {
         if (self.currentCity.severeWeatherEvents.count > 0) {
-            // Return warning icon for any severe weather event, but I may change this in the future since some events have their own icons
-            return [UIImage systemImageNamed:@"exclamationmark.triangle.fill"];
+            // Currently only checking the first severe weather event, but I may change this in the future since there can be multiple events
+            // Check the importance of the severe weather event, as that determines whether or not to return the severe weather icon
+            WFSevereWeatherEvent *severeWeatherEvent = self.currentCity.severeWeatherEvents[0];
+            if (severeWeatherEvent.importance != 0) {
+                // Return a severe weather icon for severe weather events with importance other than 0
+                return [UIImage systemImageNamed:@"exclamationmark.triangle.fill"];
+            }
         }
     }
 
