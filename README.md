@@ -2,7 +2,8 @@
 
 A weather fetching library for jailbroken iOS devices
 
-![Project Logo](images/logo.png)
+<img src="images/logo.png" width="512" height="auto">
+
 
 [![GitHub Stars](https://img.shields.io/github/stars/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/network/members)
@@ -162,7 +163,10 @@ You can listen for updates by adding an observer to the default notification cen
 
 ```objc
 // Assuming you wish to invoke the temperatureChanged method when the temperature changes
-[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(temperatureChanged) name:@"kDCWeatherTemperatureChange" object:nil];
+[[NSNotificationCenter defaultCenter] addObserver:self 
+                                      selector:@selector(temperatureChanged)
+                                      name:@"kDCWeatherTemperatureChange"
+                                      object:nil];
 
 // Assuming you wish to invoke the locationChanged method when the location changes
 [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(locationChanged) name:@"kDCWeatherLocationChange" object:nil];
