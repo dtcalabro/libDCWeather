@@ -1,6 +1,5 @@
 // DCTemperature.h
 #import <Foundation/Foundation.h>
-#import <WeatherFoundation/WFTemperature.h>
 
 @interface DCTemperature : NSObject
 @property (nonatomic) CGFloat temperature;
