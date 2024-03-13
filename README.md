@@ -4,7 +4,6 @@ A weather fetching library for jailbroken iOS devices
 
 <img src="images/logo.png" width="512" height="auto">
 
-
 [![GitHub Stars](https://img.shields.io/github/stars/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/network/members)
 [![GitHub Issues](https://img.shields.io/github/issues/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/issues)
@@ -179,7 +178,7 @@ You can listen for updates by adding an observer to the default notification cen
 
 If you like the project and wish to support my work, please consider donating. Your support is greatly appreciated.
 
-<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="200" height="auto">
+<a href="https://www.buymeacoffee.com/dtcalabro"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="200" height="auto"><a>
 
 ## Credits
 
