@@ -2,7 +2,7 @@
 
 A weather fetching library for jailbroken iOS devices
 
-<img src="images/logo.png" width="512" height="auto">
+<img src="images/logo.png" width="512" height="auto" alt="libDCWeather Logo">
 
 [![GitHub Stars](https://img.shields.io/github/stars/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/network/members)
@@ -170,23 +170,29 @@ You can listen for updates by adding an observer to the default notification cen
 
 ```objc
 // Assuming you wish to invoke the temperatureChanged method when the temperature changes
-[[NSNotificationCenter defaultCenter] addObserver:self 
+[[NSNotificationCenter defaultCenter] addObserver:self
                                       selector:@selector(temperatureChanged)
                                       name:@"kDCWeatherTemperatureChange"
                                       object:nil];
 
 // Assuming you wish to invoke the locationChanged method when the location changes
-[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(locationChanged) name:@"kDCWeatherLocationChange" object:nil];
+[[NSNotificationCenter defaultCenter] addObserver:self
+                                      selector:@selector(locationChanged)
+                                      name:@"kDCWeatherLocationChange"
+                                      object:nil];
 
 // Assuming you wish to invoke the conditionChanged method when the condition changes
-[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(conditionChanged) name:@"kDCWeatherConditionChange" object:nil];
+[[NSNotificationCenter defaultCenter] addObserver:self
+                                      selector:@selector(conditionChanged)
+                                      name:@"kDCWeatherConditionChange"
+                                      object:nil];
 ```
 
 ## Donations
 
 If you like the project and wish to support my work, please consider donating. Your support is greatly appreciated.
 
-<a href="https://www.buymeacoffee.com/dtcalabro"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="200" height="auto"><a>
+<a href="https://www.buymeacoffee.com/dtcalabro"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="200" height="auto" alt="BuyMeACoffee Logo></a>
 
 ## Credits
 
