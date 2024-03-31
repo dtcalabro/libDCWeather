@@ -277,6 +277,10 @@ enum ConditionCode {
 - (void)requestRefresh {
     debug_log("Requesting a refresh");
 
+    // Force a new location update if possible
+    if (self.weatherLocationManager)
+        [self.weatherLocationManager forceLocationUpdate];
+
     // Refresh the weather
     [self _refreshWeather];
     
