@@ -21,7 +21,6 @@
 @property (nonatomic) DCDistance *distanceThreshold;
 @property (nonatomic) BOOL isSleeping;
 + (instancetype)sharedInstance;
-- (void)refreshLocation;
 - (void)requestRefresh;
 - (BOOL)locationServicesEnabled;
 - (BOOL)locationAuthorizationAlways;

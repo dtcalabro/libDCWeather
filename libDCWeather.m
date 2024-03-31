@@ -103,33 +103,46 @@ enum ConditionCode {
         self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
         self.weatherLocationManager.locationUpdatesEnabled = YES;
         self.weatherLocationManager.locationTrackingIsReady = YES;
+        [self.weatherLocationManager setLocationTrackingActive:YES];
 
         // Start location tracking in Weather.framework
         if ([self.weatherLocationManager respondsToSelector:@selector(setLocationTrackingReady:activelyTracking:watchKitExtension:)])
             [self.weatherLocationManager setLocationTrackingReady:YES activelyTracking:NO watchKitExtension:NO];
 
-        if ([self locationServicesEnabled]) {
-            [self.weatherLocationManager setLocationTrackingActive:YES];
-            [[objc_getClass("WeatherPreferences") sharedPreferences] setLocalWeatherEnabled:YES];
-
+        // Refresh the location and weather, plus add observers
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             // Force a new location update if possible
             [self.weatherLocationManager forceLocationUpdate];
-        } else {
-            // Location services are not enabled, so enable them
-            // TODO: Implement a way to restore the original state after
-            //debug_log("Location services are not enabled");
-            //int origAuthStatus = [objc_getClass("CLLocationManager") authorizationStatusForBundleIdentifier:@"com.apple.weather"];
-            //[objc_getClass("CLLocationManager") setAuthorizationStatusByType:3 forBundleIdentifier:@"com.apple.weather"];
 
-            [self.weatherLocationManager setLocationTrackingActive:YES];
-            [[objc_getClass("WeatherPreferences") sharedPreferences] setLocalWeatherEnabled:YES];
+            // Get the local weather city and update it
+            WeatherPreferences *weatherPreferences = [[WeatherPreferences alloc] init];
+            [weatherPreferences setLocalWeatherEnabled:YES];
+            self.currentCity = [weatherPreferences localWeatherCity];
+            [self.currentCity update];
 
-            // Force a new location update if possible
-            [self.weatherLocationManager forceLocationUpdate];
-        }
+            // Add observers
+            [self.currentCity addObserver:self
+                forKeyPath:@"temperature"
+                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                context:NULL];
+            [self.currentCity addObserver:self
+                forKeyPath:@"location"
+                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                context:NULL];
+            [self.currentCity addObserver:self
+                forKeyPath:@"conditionCode"
+                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                context:NULL];
 
-        // Refresh the location and weather
-        [self refreshLocation];
+            // Add observer for device wake notification
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                selector:@selector(handleDeviceWakeNotification:)
+                                                name:DEVICE_WAKE_NOTIFICATION
+                                                object:nil];
+            
+            // Refresh the weather
+            [self requestRefresh];
+        });
 
         // Start the update timer with the full interval
         [self _restartTimerWithInterval:[self.updateInterval seconds]];
@@ -143,42 +156,6 @@ enum ConditionCode {
     [self.currentCity removeObserver:self forKeyPath:@"location"];
     [self.currentCity removeObserver:self forKeyPath:@"conditionCode"];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:DEVICE_WAKE_NOTIFICATION object:nil];
-}
-
-- (void)refreshLocation {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        // Force a new location update if possible
-        [self.weatherLocationManager forceLocationUpdate];
-
-        // Get the local weather city and update it
-        WeatherPreferences *weatherPreferences = [[WeatherPreferences alloc] init];
-        [weatherPreferences setLocalWeatherEnabled:YES];
-        self.currentCity = [weatherPreferences localWeatherCity];
-        [self.currentCity update];
-        
-        // Add observers
-        [self.currentCity addObserver:self
-            forKeyPath:@"temperature"
-            options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
-            context:NULL];
-        [self.currentCity addObserver:self
-            forKeyPath:@"location"
-            options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
-            context:NULL];
-        [self.currentCity addObserver:self
-            forKeyPath:@"conditionCode"
-            options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
-            context:NULL];
-
-        // Add observer for device wake notification
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                              selector:@selector(handleDeviceWakeNotification:)
-                                              name:DEVICE_WAKE_NOTIFICATION
-                                              object:nil];
-
-        // Refresh the weather
-        [self requestRefresh];
-    });
 }
 
 - (BOOL)locationServicesEnabled {
