@@ -132,6 +132,14 @@ You can choose whether to support severe weather alerts. This applies to both co
 [weather conditionIncludesSevereWeather:YES];
 ```
 
+### Forcing a weather update
+
+Weather will automatically update based on the auto update interval you set. However, if you wish to force a weather update, you can do so at any point by calling the following method.
+
+```objc
+[weather requestRefresh];
+```
+
 ### How to get current temperature
 
 ```objc
