@@ -6,17 +6,22 @@
 
 #define DEGREE_SYMBOL @"\u00B0"
 
+// external
 #define TEMPERATURE_CHANGE_NOTIFICATION @"kDCWeatherTemperatureChange"
 #define LOCATION_CHANGE_NOTIFICATION    @"kDCWeatherLocationChange"
 #define CONDITION_CHANGE_NOTIFICATION   @"kDCWeatherConditionChange"
 
-#define debug_log(...) ({\
-	if (LDCW_DEBUG) {\
-		char* str; \
-		asprintf(&str, __VA_ARGS__); \
-		os_log(OS_LOG_DEFAULT, "[LDCW_DEBUG] %s", str); \
-	}\
-})
+// internal
+#define DEVICE_WAKE_NOTIFICATION        @"kDCWeatherDeviceWake"
+
+#define debug_log(fmt, ...) do { \
+    char *str = NULL; \
+    asprintf(&str, fmt, ##__VA_ARGS__); \
+    if (str) { \
+        os_log(OS_LOG_DEFAULT, "[LDCW_DEBUG] %s", str); \
+        free(str); \
+    } \
+} while (0)
 
 enum ConditionCode {
     Tornado = 0,
@@ -77,8 +82,9 @@ enum ConditionCode {
 	dispatch_once(&p, ^{
         // Initialize the shared instance here
 		_sharedSelf = [[DCWeather alloc] init];
-        [_sharedSelf setAutoUpdateInvervalInMinutes:5];
-        [_sharedSelf setDistanceThresholdToConsiderLocationChangeInMiles:1];
+        [_sharedSelf conditionIncludesSevereWeather:NO];                        // Default to not include severe weather
+        [_sharedSelf setAutoUpdateInvervalInMinutes:5];                         // Default to update every 5 minutes
+        [_sharedSelf setDistanceThresholdToConsiderLocationChangeInMiles:1];    // Default to 1 mile
 	});
 	return _sharedSelf;
 }
@@ -87,9 +93,9 @@ enum ConditionCode {
     self = [super init];
     if (self) {
         // Initialization code here
-        self.conditionIncludesSevereWeather = NO;
-        [self setAutoUpdateInvervalInMinutes:5];
-        [self setDistanceThresholdToConsiderLocationChangeInMiles:1];
+        [self conditionIncludesSevereWeather:NO];                       // Default to not include severe weather
+        [self setAutoUpdateInvervalInMinutes:5];                        // Default to update every 5 minutes
+        [self setDistanceThresholdToConsiderLocationChangeInMiles:1];   // Default to 1 mile
 
         // Initialize the WeatherLocationManager
         self.weatherLocationManager = [objc_getClass("WeatherLocationManager") sharedWeatherLocationManager];
@@ -136,6 +142,7 @@ enum ConditionCode {
     [self.currentCity removeObserver:self forKeyPath:@"temperature"];
     [self.currentCity removeObserver:self forKeyPath:@"location"];
     [self.currentCity removeObserver:self forKeyPath:@"conditionCode"];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:DEVICE_WAKE_NOTIFICATION object:nil];
 }
 
 - (void)refreshLocation {
@@ -162,6 +169,12 @@ enum ConditionCode {
             forKeyPath:@"conditionCode"
             options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
             context:NULL];
+
+        // Add observer for device wake notification
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                              selector:@selector(handleDeviceWakeNotification:)
+                                              name:DEVICE_WAKE_NOTIFICATION
+                                              object:nil];
 
         // Refresh the weather
         [self requestRefresh];
@@ -248,17 +261,22 @@ enum ConditionCode {
 
     if ([keyPath isEqualToString:@"temperature"]) {
         // The temperature has changed
+        debug_log("Temperature has changed");
         [[NSNotificationCenter defaultCenter] postNotificationName:TEMPERATURE_CHANGE_NOTIFICATION object:self];
     } else if ([keyPath isEqualToString:@"location"]) {
         // The location has changed
+        debug_log("Location has changed");
         [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
     } else if ([keyPath isEqualToString:@"conditionCode"]) {
         // The conditionCode has changed
+        debug_log("Condition has changed");
         [[NSNotificationCenter defaultCenter] postNotificationName:CONDITION_CHANGE_NOTIFICATION object:self];
     }
 }
 
 - (void)requestRefresh {
+    debug_log("Requesting a refresh");
+
     // Refresh the weather
     [self _refreshWeather];
     
@@ -267,6 +285,8 @@ enum ConditionCode {
 }
 
 - (void)_restartTimerWithInterval:(NSTimeInterval)interval {
+    debug_log("Restarting timer with interval: %f", interval);
+
     // Invalidate the current timer
     if (self.updateTimer)
         [self.updateTimer invalidate];
@@ -274,7 +294,7 @@ enum ConditionCode {
     // Schedule a new timer
     self.updateTimer = [NSTimer scheduledTimerWithTimeInterval:interval
                                                         target:self
-                                                      selector:@selector(_updateTimerFired:)
+                                                      selector:@selector(_updateTimerEnded:)
                                                       userInfo:nil
                                                        repeats:NO];
     
@@ -282,7 +302,13 @@ enum ConditionCode {
     self.nextUpdateTime = [[NSDate date] dateByAddingTimeInterval:interval];
 }
 
+- (void)_updateTimerEnded:(NSTimer*)timer {
+    [self requestRefresh];
+}
+
 - (void)_refreshWeather {
+    debug_log("Refreshing weather");
+
     // Refresh the weather
     [self _refreshWeatherWithLocation:self.currentCity.location];
 }
@@ -295,10 +321,32 @@ enum ConditionCode {
         [self.currentCity addUpdateObserver:self];
 
     // Force a location update
+    debug_log("Forcing a location update");
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         TWCLocationUpdater *locationUpdater = [objc_getClass("TWCLocationUpdater") sharedLocationUpdater];
         [locationUpdater updateWeatherForLocation:location city:self.currentCity];
     });
+}
+
+- (void)handleDeviceWakeNotification:(NSNotification *)notification {
+    BOOL screenIsWaking = [notification.userInfo[@"screenIsWaking"] boolValue];
+
+    if (screenIsWaking && self.isSleeping) {
+        self.isSleeping = NO;
+        debug_log("Screen is waking!");
+
+        // Restarting timer as needed.
+        NSTimeInterval nextUpdateTime = [self.nextUpdateTime timeIntervalSinceDate:[NSDate date]];
+        
+        // Restart the timer with the next update time
+        [self _restartTimerWithInterval:nextUpdateTime];
+    } else if (!screenIsWaking && !self.isSleeping) {
+        self.isSleeping = YES;
+        debug_log("Screen is going to sleep!");
+
+        // Stop update timer when device is sleeping because it's not needed
+        [self.updateTimer invalidate];
+    }
 }
 
 - (NSString *)temperatureString {
@@ -308,6 +356,7 @@ enum ConditionCode {
 
     // Create a DCTemperature object and return the temperature in the user's unit
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity temperature].fahrenheit];
+    debug_log("City: %s, Temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
     return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUserUnit], DEGREE_SYMBOL];
 }
 
@@ -561,7 +610,7 @@ enum ConditionCode {
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray*)locations {
     if (locations.count > 0) {
-        CLLocation *newestLocation = [locations lastObject]; // Get the newest location      
+        CLLocation *newestLocation = [locations lastObject]; // Get the newest location
         
         // Check if the location has changed
         if (self.currentLocation == nil) {
@@ -569,10 +618,14 @@ enum ConditionCode {
             self.currentLocation = newestLocation;
         } else {
             DCDistance *distance = [[DCDistance alloc] initWithMeters:[newestLocation distanceFromLocation:self.currentLocation]];
-            if ([distance meters] < [self.distanceThreshold meters]) // less than threshold, not considered a new location
+            debug_log("Distance from newestLocation to self.currentLocation: %.2f meters", [distance meters]);
+            if ([distance meters] < [self.distanceThreshold meters]) { // less than threshold, not considered a new location
+                debug_log("Distance is less than threshold, not considered a new location");
                 return;
-            else
+            } else {
+                debug_log("Distance is greater than threshold, considered a new location");
                 self.currentLocation = newestLocation; // greater than threshold, so save location and update weather
+            }
         }
 
         // Refresh the weather with the new location
@@ -588,6 +641,49 @@ enum ConditionCode {
 
     // Post notification of location change
     [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
+}
+
+@end
+
+// Needed to swizzle SBScreenWakeAnimationController in order to know when the screen sleeps/wakes so we can stop/start the update timer
+@implementation SBScreenWakeAnimationController (Swizzling)
+
++ (void)load {
+    // Swizzle the _handleAnimationCompletionIfNecessaryForWaking: method
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class class = [self class];
+
+        SEL originalSelector = @selector(_handleAnimationCompletionIfNecessaryForWaking:);
+        SEL swizzledSelector = @selector(swizzled_handleAnimationCompletionIfNecessaryForWaking:);
+
+        Method originalMethod = class_getInstanceMethod(class, originalSelector);
+        Method swizzledMethod = class_getInstanceMethod(class, swizzledSelector);
+
+        BOOL didAddMethod = class_addMethod(class,
+                                            originalSelector,
+                                            method_getImplementation(swizzledMethod),
+                                            method_getTypeEncoding(swizzledMethod));
+
+        if (didAddMethod) {
+            class_replaceMethod(class,
+                                swizzledSelector,
+                                method_getImplementation(originalMethod),
+                                method_getTypeEncoding(originalMethod));
+        } else {
+            method_exchangeImplementations(originalMethod, swizzledMethod);
+        }
+    });
+}
+
+- (void)swizzled_handleAnimationCompletionIfNecessaryForWaking:(BOOL)arg1 {
+    // Call the original implementation
+    [self swizzled_handleAnimationCompletionIfNecessaryForWaking:arg1];
+
+    // Post a notification so DCWeather can be notified of the change
+    [[NSNotificationCenter defaultCenter] postNotificationName:DEVICE_WAKE_NOTIFICATION
+                                          object:nil
+                                          userInfo:@{@"screenIsWaking": @(arg1)}];
 }
 
 @end

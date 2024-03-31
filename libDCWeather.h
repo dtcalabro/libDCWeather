@@ -7,6 +7,9 @@
 #import "DCTime.h"
 #import "DCTemperature.h"
 
+@interface SBScreenWakeAnimationController : NSObject
+@end
+
 @interface DCWeather : NSObject <CLLocationManagerDelegate, CityUpdateObserver>
 @property (nonatomic, strong) City *currentCity;
 @property (nonatomic, strong) CLLocation *currentLocation; 
@@ -16,6 +19,7 @@
 @property (nonatomic) BOOL conditionIncludesSevereWeather;
 @property (nonatomic) DCTime *updateInterval;
 @property (nonatomic) DCDistance *distanceThreshold;
+@property (nonatomic) BOOL isSleeping;
 + (instancetype)sharedInstance;
 - (void)refreshLocation;
 - (void)requestRefresh;

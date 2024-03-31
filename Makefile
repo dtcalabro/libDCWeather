@@ -4,7 +4,9 @@ $(LIBRARY_NAME)_FILES = $(wildcard *.m)
 $(LIBRARY_NAME)_CFLAGS = -fobjc-arc -I$(THEOS_PROJECT_DIR)/headers -ferror-limit=0
 #$(LIBRARY_NAME)_CFLAGS = -fobjc-arc -ferror-limit=0
 $(LIBRARY_NAME)_FRAMEWORKS = UIKit CoreLocation
-$(LIBRARY_NAME)_PRIVATE_FRAMEWORKS = Weather
+#$(LIBRARY_NAME)_PRIVATE_FRAMEWORKS = Weather
+#$(LIBRARY_NAME)_PRIVATE_FRAMEWORKS = Weather SystemWake SpringBoard
+$(LIBRARY_NAME)_PRIVATE_FRAMEWORKS = Weather SpringBoard
 $(LIBRARY_NAME)_INSTALL_PATH = /usr/lib
 
 ifeq ($(SIM_BUILD), 1)
