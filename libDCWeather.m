@@ -112,7 +112,7 @@ enum ConditionCode {
             [self.weatherLocationManager setLocationTrackingReady:YES activelyTracking:NO watchKitExtension:NO];
 
         // Refresh the location and weather, plus add observers
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             // Force a new location update if possible
             [self.weatherLocationManager forceLocationUpdate];
 
