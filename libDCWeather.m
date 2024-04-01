@@ -15,11 +15,13 @@
 #define DEVICE_WAKE_NOTIFICATION        @"kDCWeatherDeviceWake"
 
 #define debug_log(fmt, ...) do { \
-    char *str = NULL; \
-    asprintf(&str, fmt, ##__VA_ARGS__); \
-    if (str) { \
-        os_log(OS_LOG_DEFAULT, "[LDCW_DEBUG] %s", str); \
-        free(str); \
+    if (LDCW_DEBUG) { \
+        char *str = NULL; \
+        asprintf(&str, fmt, ##__VA_ARGS__); \
+        if (str) { \
+            os_log(OS_LOG_DEFAULT, "[LDCW_DEBUG] %s", str); \
+            free(str); \
+        } \
     } \
 } while (0)
 
