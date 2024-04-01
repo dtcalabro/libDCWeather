@@ -337,15 +337,24 @@ enum ConditionCode {
     if (![self locationServicesEnabled])
         return @"Temperature Not Available";
 
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the temperature is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return @"Temperature Not Available";
+
     // Create a DCTemperature object and return the temperature in the user's unit
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity temperature].fahrenheit];
     debug_log("City: %s, Temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
+
     return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUserUnit], DEGREE_SYMBOL];
 }
 
 - (NSString *)conditionString {
     // Check if location services are enabled
     if (![self locationServicesEnabled])
+        return @"Condition Not Available";
+
+    // Check if the condition is Tornado and the temperature is 0 , which indicates that the condition is not available
+    if (self.currentCity.conditionCode == Tornado && self.currentCity.temperature.fahrenheit == 0)
         return @"Condition Not Available";
 
     // Check for severe weather condition if enabled
@@ -464,6 +473,10 @@ enum ConditionCode {
     // Check if location services are enabled
     if (![self locationServicesEnabled])
         return nil;
+
+    // Check if the condition is Tornado and the temperature is 0 , which indicates that the condition is not available
+    if (self.currentCity.conditionCode == Tornado && self.currentCity.temperature.fahrenheit == 0)
+        return [UIImage systemImageNamed:@"questionmark.circle.fill"];
 
     // Check for severe weather condition if enabled
     if (self.conditionIncludesSevereWeather) {
