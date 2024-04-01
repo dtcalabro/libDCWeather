@@ -18,11 +18,11 @@
 }
 
 - (double)temperatureInCelsius {
-    return (int)(self.temperature - 32) * 5 / 9;
+    return round((self.temperature - 32) * 5.0 / 9.0);
 }
 
 - (double)temperatureInFahrenheit {
-    return (int)self.temperature;
+    return round(self.temperature);
 }
 
 @end
