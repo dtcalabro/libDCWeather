@@ -192,7 +192,7 @@ You can listen for updates by adding an observer to the default notification cen
 
 If you like the project and wish to support my work, please consider donating. Your support is greatly appreciated.
 
-<a href="https://www.buymeacoffee.com/dtcalabro"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="200" height="auto" alt="BuyMeACoffee Logo></a>
+<a href="https://www.buymeacoffee.com/dtcalabro"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" width="200" height="auto" alt="BuyMeACoffee Logo"></a>
 
 ## Credits
 
