@@ -1,6 +1,6 @@
 Package: com.dcproducts.libdcweather
 Name: libDCWeather
-Version: 0.0.1
+Version: 1.0.0
 Architecture: iphoneos-arm
 Description: A weather fetching library for jailbroken iOS devices.
 Maintainer: Derek Calabro
@@ -9,4 +9,4 @@ Section: System
 Tag: role::developer
 Depiction: https://dtcalabro.github.io/repo/depictions/?p=com.dcproducts.libdcweather
 SileoDepiction: https://dtcalabro.github.io/repo/depictions/com.dcproducts.libdcweather/depiction.json
-Icon: https://github.com/dtcalabro/libDCWeather/blob/main/images/icon-fullsize.png
+Icon: https://raw.githubusercontent.com/dtcalabro/libDCWeather/main/images/icon-fullsize.png
