@@ -19,8 +19,8 @@ A weather fetching library for jailbroken iOS devices
 
 - [X] Current condition string (48 conditions not including severe weather alerts)
 - [X] Current condition image (supports day and night images)
-- [X] Current temperature (supports Celsius and Fahrenheit, but defaults to the user's prefered unit)
-- [X] Feels like temperature (supports Celsius and Fahrenheit, but defaults to the user's prefered unit)
+- [X] Current temperature (supports Celsius, Fahrenheit, and Kelvin, but defaults to the user's prefered unit)
+- [X] Feels like temperature (supports Celsius, Fahrenheit, and Kelvin, but defaults to the user's prefered unit)
 - [X] Current city name
 - [ ] Daily high and low temperatures
 - [ ] Humidity
@@ -34,6 +34,7 @@ A weather fetching library for jailbroken iOS devices
 - [X] Set the weather auto update interval (default is 5 minutes)
 - [X] Set the distance threshold to consider the location as changed (default is 1 mile)
 - [X] Choose whether to support severe weather alerts, which applies to both condition strings and images (default is NO)
+- [X] Set the temperature unit (default is the user's prefered unit)
 - [ ] Multilingual support
 
 ## I am a user, where can I get this?
@@ -132,6 +133,21 @@ You can choose whether to support severe weather alerts. This applies to both co
 [weather conditionIncludesSevereWeather:YES];
 ```
 
+### Setting the temperature unit
+
+You can set the temperature unit to either Celsius, Fahrenheit, or Kelvin. The default is the user's prefered unit but you can change it to your liking.
+
+```objc
+// To set it to Celsius
+[weather setTemperatureUnit:Celsius];
+
+// To set it to Fahrenheit
+[weather setTemperatureUnit:Fahrenheit];
+
+// To set it to Kelvin
+[weather setTemperatureUnit:Kelvin];
+```
+
 ### Forcing a weather update
 
 Weather will automatically update based on the auto update interval you set. However, if you wish to force a weather update, you can do so at any point by calling the following method.
@@ -140,16 +156,28 @@ Weather will automatically update based on the auto update interval you set. How
 [weather requestRefresh];
 ```
 
-### How to get current temperature
+### How to get current temperature string
 
 ```objc
 NSString *temperature = [weather temperatureString];
 ```
 
-### How to get current feels like temperature
+### How to get current temperature
+
+```objc
+double temperature = [weather temperature];
+```
+
+### How to get current feels like temperature string
 
 ```objc
 NSString *feelsLikeTemperature = [weather feelsLikeTemperatureString];
+```
+
+### How to get current feels like temperature
+
+```objc
+double feelsLikeTemperature = [weather feelsLikeTemperature];
 ```
 
 ### How to get current condition string

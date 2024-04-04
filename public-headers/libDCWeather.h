@@ -1,6 +1,12 @@
 // public libDCWeather.h
 #import <Foundation/Foundation.h>
 
+typedef enum TemperatureUnit {
+    Celsius,
+    Fahrenheit,
+    Kelvin
+} TemperatureUnit;
+
 @interface DCWeather : NSObject
 + (instancetype)sharedInstance;
 - (void)requestRefresh;
@@ -13,8 +19,11 @@
 - (void)setDistanceThresholdToConsiderLocationChangeInYards:(double)distanceThreshold;
 - (void)setDistanceThresholdToConsiderLocationChangeInMiles:(double)distanceThreshold;
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather;
+- (void)setTemperatureUnit:(enum TemperatureUnit)unit;
 - (NSString *)temperatureString;
+- (double)temperature;
 - (NSString *)feelsLikeTemperatureString;
+- (double)feelsLikeTemperature;
 - (NSString *)conditionString;
 - (UIImage *)conditionImage;
 - (NSString *)cityString;

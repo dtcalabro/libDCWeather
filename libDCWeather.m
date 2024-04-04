@@ -93,9 +93,10 @@ enum ConditionCode {
 	dispatch_once(&p, ^{
         // Initialize the shared instance here
 		_sharedSelf = [[DCWeather alloc] init];
-        [_sharedSelf conditionIncludesSevereWeather:NO];                        // Default to not include severe weather
-        [_sharedSelf setAutoUpdateInvervalInMinutes:5];                         // Default to update every 5 minutes
-        [_sharedSelf setDistanceThresholdToConsiderLocationChangeInMiles:1];    // Default to 1 mile
+        [_sharedSelf conditionIncludesSevereWeather:NO];                            // Default to not include severe weather
+        [_sharedSelf setAutoUpdateInvervalInMinutes:5];                             // Default to update every 5 minutes
+        [_sharedSelf setDistanceThresholdToConsiderLocationChangeInMiles:1];        // Default to 1 mile
+        [_sharedSelf setTemperatureUnit:[_sharedSelf userTemperatureUnit]];         // Default to the user's temperature unit
 	});
 	return _sharedSelf;
 }
@@ -106,9 +107,10 @@ enum ConditionCode {
     self = [super init];
     if (self) {
         // Initialization code here
-        [self conditionIncludesSevereWeather:NO];                       // Default to not include severe weather
-        [self setAutoUpdateInvervalInMinutes:5];                        // Default to update every 5 minutes
-        [self setDistanceThresholdToConsiderLocationChangeInMiles:1];   // Default to 1 mile
+        [self conditionIncludesSevereWeather:NO];                                   // Default to not include severe weather
+        [self setAutoUpdateInvervalInMinutes:5];                                    // Default to update every 5 minutes
+        [self setDistanceThresholdToConsiderLocationChangeInMiles:1];               // Default to 1 mile
+        [self setTemperatureUnit:[self userTemperatureUnit]];                       // Default to the user's temperature unit
 
         // Initialize the WeatherLocationManager
         self.weatherLocationManager = [objc_getClass("WeatherLocationManager") sharedWeatherLocationManager];
@@ -264,6 +266,20 @@ enum ConditionCode {
     self.distanceThreshold = [[DCDistance alloc] initWithMiles:distanceThreshold];
 }
 
+- (enum TemperatureUnit)userTemperatureUnit {
+    // Get the user's temperature unit
+    method_log();
+    if ([[objc_getClass("WeatherPreferences") sharedPreferences] isCelsius])
+        return Celsius;
+    return Fahrenheit;
+}
+
+- (void)setTemperatureUnit:(enum TemperatureUnit)unit {
+    // Set the temperature unit
+    method_log(@"unit: %d", unit);
+    _temperatureUnit = unit;
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
                         change:(NSDictionary<NSKeyValueChangeKey,id> *)change
@@ -389,7 +405,25 @@ enum ConditionCode {
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity temperature].fahrenheit];
     debug_log("City: %s, Temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
 
-    return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUserUnit], DEGREE_SYMBOL];
+    return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUnit:self.temperatureUnit], DEGREE_SYMBOL];
+}
+
+- (double)temperature {
+    method_log();
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return 0;
+
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the temperature is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return 0;
+
+    // Create a DCTemperature object and return the temperature in the user's unit
+    DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity temperature].fahrenheit];
+    debug_log("City: %s, Temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
+
+    return [temperature temperatureInUnit:self.temperatureUnit];
 }
 
 - (NSString *)feelsLikeTemperatureString {
@@ -407,7 +441,25 @@ enum ConditionCode {
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity feelsLike].fahrenheit];
     debug_log("City: %s, Feels like temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
 
-    return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUserUnit], DEGREE_SYMBOL];
+    return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUnit:self.temperatureUnit], DEGREE_SYMBOL];
+}
+
+- (double)feelsLikeTemperature {
+    method_log();
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return 0;
+
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the feels like temperature is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return 0;
+
+    // Create a DCTemperature object and return the feelsLike temperature in the user's unit
+    DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity feelsLike].fahrenheit];
+    debug_log("City: %s, Feels like temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
+
+    return [temperature temperatureInUnit:self.temperatureUnit];
 }
 
 - (NSString *)conditionString {

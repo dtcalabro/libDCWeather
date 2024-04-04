@@ -17,6 +17,7 @@
 @property (nonatomic, strong) NSTimer *updateTimer;
 @property (nonatomic, retain) NSDate *nextUpdateTime;
 @property (nonatomic) BOOL conditionIncludesSevereWeather;
+@property (nonatomic) enum TemperatureUnit temperatureUnit;
 @property (nonatomic) DCTime *updateInterval;
 @property (nonatomic) DCDistance *distanceThreshold;
 @property (nonatomic) BOOL isSleeping;
@@ -33,8 +34,12 @@
 - (void)setDistanceThresholdToConsiderLocationChangeInYards:(double)distanceThreshold;
 - (void)setDistanceThresholdToConsiderLocationChangeInMiles:(double)distanceThreshold;
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather;
+- (enum TemperatureUnit)userTemperatureUnit;
+- (void)setTemperatureUnit:(enum TemperatureUnit)unit;
 - (NSString *)temperatureString;
+- (double)temperature;
 - (NSString *)feelsLikeTemperatureString;
+- (double)feelsLikeTemperature;
 - (NSString *)conditionString;
 - (UIImage *)conditionImage;
 - (NSString *)cityString;
