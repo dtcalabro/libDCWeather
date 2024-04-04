@@ -46,11 +46,9 @@
 - (double)feelsLikeTemperature;
 - (NSString *)conditionString;
 - (UIImage *)conditionImage;
-- (float)visibility;
 - (NSString *)windSpeedString;
 - (float)windSpeed;
 - (NSString *)windDirectionString;
-- (float)pressure;
 - (NSString *)cityString;
 @end
 
