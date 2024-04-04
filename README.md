@@ -17,11 +17,11 @@ A weather fetching library for jailbroken iOS devices
 
 ## Weather Data
 
-- [X] Current condition string (48 conditions not including severe weather alerts)
+- [X] Current condition string (48 conditions, not including severe weather alerts)
 - [X] Current condition image (supports day and night images)
-- [X] Current temperature (supports Celsius, Fahrenheit, and Kelvin, but defaults to the user's prefered unit)
-- [X] Feels like temperature (supports Celsius, Fahrenheit, and Kelvin, but defaults to the user's prefered unit)
-- [X] Wind speed (supports kilometers per hour and miles per hour, but defaults to the user's prefered unit)
+- [X] Current temperature (supports Celsius, Fahrenheit, and Kelvin, but defaults to the user's preferred unit)
+- [X] Feels like temperature (supports Celsius, Fahrenheit, and Kelvin, but defaults to the user's preferred unit)
+- [X] Wind speed (supports kilometers per hour and miles per hour, but defaults to the user's preferred unit)
 - [X] Wind direction
 - [X] Current city name
 - [ ] Daily high and low temperatures
@@ -35,17 +35,17 @@ A weather fetching library for jailbroken iOS devices
 - [X] Set the weather auto update interval (default is 5 minutes)
 - [X] Set the distance threshold to consider the location as changed (default is 1 mile)
 - [X] Choose whether to support severe weather alerts, which applies to both condition strings and images (default is NO)
-- [X] Set the temperature unit (default is the user's prefered unit)
-- [X] Set the speed unit (default is the user's prefered unit)
+- [X] Set the temperature unit (default is the user's preferred unit)
+- [X] Set the speed unit (default is the user's preferred unit)
 - [ ] Multilingual support
 
-## I am a user, where can I get this?
+## I am a user; where can I get this?
 
-I should preface that this library does not do anything on its own. It is meant to be used by developers in their projects.
+I should preface by saying that this library does not do anything on its own. It is meant to be used by developers in their projects.
 
 With that being said, if you still wish to install this library, it can be downloaded from my repository at <https://dtcalabro.github.io/repo>.
 
-## I am a developer, how do I integrate this into my project?
+## I am a developer; how do I integrate this into my project?
 
 If you wish to integrate this library into your project, you can follow the instructions below.
 
@@ -65,13 +65,13 @@ You will need to add it to the libraries in your project makefile
 TWEAKNAME_LIBRARIES = dcweather
 ```
 
-You must also add it to your project's control file like so
+You must also add it to your project's control file, like so
 
 ```control
 Depends: mobilesubstrate, com.dcproducts.libdcweather
 ```
 
-Then you can import the library in your tweak and start using it
+Then you can import the library into your tweak and start using it
 
 ```objc
 #import <libDCWeather.h>
@@ -79,7 +79,7 @@ Then you can import the library in your tweak and start using it
 
 ## Usage
 
-There are two ways to initialize the library. You can either use the shared instance or create a new instance depending on your needs.
+There are two ways to initialize the library. You can either use the shared instance or create a new instance, depending on your needs.
 
 ```objc
 // Shared instance
@@ -91,9 +91,9 @@ DCWeather *weather = [DCWeather sharedInstance];
 DCWeather *weather = [[DCWeather alloc] init];
 ```
 
-### Setting the auto update interval
+### Setting the auto-update interval
 
-There are three ways to set the auto update interval. The default is 5 minutes but you can either set it to a specific number of seconds, minutes or hours.
+There are three ways to set the auto-update interval. The default is 5 minutes, but you can either set it to a specific number of seconds, minutes, or hours.
 
 ```objc
 // Seconds
@@ -108,7 +108,7 @@ There are three ways to set the auto update interval. The default is 5 minutes b
 
 ### Setting the distance threshold
 
-You can set the distance threshold to consider the location as changed. The default is 1 mile but you can change it to your liking.
+You can set the distance threshold to consider the location as changed. The default is 1 mile, but you can change it to your liking.
 
 ```objc
 // Meters
@@ -137,7 +137,7 @@ You can choose whether to support severe weather alerts. This applies to both co
 
 ### Setting the temperature unit
 
-You can set the temperature unit to either Celsius, Fahrenheit, or Kelvin. The default is the user's prefered unit but you can change it to your liking.
+You can set the temperature unit to either Celsius, Fahrenheit, or Kelvin. The default is the user's preferred unit, but you can change it to your liking.
 
 ```objc
 // To set it to Celsius
@@ -152,7 +152,7 @@ You can set the temperature unit to either Celsius, Fahrenheit, or Kelvin. The d
 
 ### Setting the speed unit
 
-You can set the speed unit to either kilometers per hour or miles per hour. The default is the user's prefered unit but you can change it to your liking.
+You can set the speed unit to either kilometers per hour or miles per hour. The default is the user's preferred unit, but you can change it to your liking.
 
 ```objc
 // To set it to kilometers per hour
@@ -164,7 +164,7 @@ You can set the speed unit to either kilometers per hour or miles per hour. The 
 
 ### Forcing a weather update
 
-Weather will automatically update based on the auto update interval you set. However, if you wish to force a weather update, you can do so at any point by calling the following method.
+Weather will automatically update based on the auto-update interval you set. However, if you wish to force a weather update, you can do so at any point by calling the following method.
 
 ```objc
 [weather requestRefresh];
@@ -194,31 +194,31 @@ NSString *feelsLikeTemperature = [weather feelsLikeTemperatureString];
 double feelsLikeTemperature = [weather feelsLikeTemperature];
 ```
 
-### How to get current condition string
+### How to get the current condition string
 
 ```objc
 NSString *condition = [weather conditionString];
 ```
 
-### How to get current condition image
+### How to get the current condition image
 
 ```objc
 UIImage *conditionImage = [weather conditionImage];
 ```
 
-### How to get current wind speed string
+### How to get the current wind speed string
 
 ```objc
 NSString *windSpeed = [weather windSpeedString];
 ```
 
-### How to get current wind speed
+### How to get the current wind speed
 
 ```objc
 double windSpeed = [weather windSpeed];
 ```
 
-### How to get current city name
+### How to get the current city name
 
 ```objc
 NSString *city = [weather cityName];
