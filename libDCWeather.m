@@ -185,10 +185,10 @@ enum ConditionCode {
 
     // Check if local weather is enabled and location services are enabled
     if (![[WeatherPreferences sharedPreferences] isLocalWeatherEnabled] || ![CLLocationManager locationServicesEnabled]) {
-        debug_log("Location services are not enabled");
+        //debug_log("Location services are not enabled");
         return NO;
     }
-    debug_log("Location services are enabled");
+    //debug_log("Location services are enabled");
     return YES;
 }
 
@@ -201,10 +201,10 @@ enum ConditionCode {
 
     // Check if location services are authorized
     if ([objc_getClass("CLLocationManager") authorizationStatusForBundleIdentifier:@"com.apple.weather"] == kCLAuthorizationStatusAuthorizedAlways) {
-        debug_log("Location services are authorized");
+        //debug_log("Location services are authorized");
         return YES;
     }
-    debug_log("Location services are not authorized");
+    //debug_log("Location services are not authorized");
     return NO;
 }
 
@@ -306,19 +306,15 @@ enum ConditionCode {
 
     if ([keyPath isEqualToString:@"temperature"]) {
         // The temperature has changed
-        debug_log("Temperature has changed");
         [[NSNotificationCenter defaultCenter] postNotificationName:TEMPERATURE_CHANGE_NOTIFICATION object:self];
     } else if ([keyPath isEqualToString:@"feelsLike"]) {
         // The feelsLike temperature has changed
-        debug_log("Feels like temperature has changed");
         [[NSNotificationCenter defaultCenter] postNotificationName:FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION object:self];
     } else if ([keyPath isEqualToString:@"location"]) {
         // The location has changed
-        debug_log("Location has changed");
         [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
     } else if ([keyPath isEqualToString:@"conditionCode"]) {
         // The conditionCode has changed
-        debug_log("Condition has changed");
         [[NSNotificationCenter defaultCenter] postNotificationName:CONDITION_CHANGE_NOTIFICATION object:self];
     }
 }
@@ -378,7 +374,6 @@ enum ConditionCode {
         [self.currentCity addUpdateObserver:self];
 
     // Force a location update
-    debug_log("Forcing a location update");
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         TWCLocationUpdater *locationUpdater = [objc_getClass("TWCLocationUpdater") sharedLocationUpdater];
         [locationUpdater updateWeatherForLocation:location city:self.currentCity];
@@ -390,7 +385,6 @@ enum ConditionCode {
 
     if (screenIsWaking && self.isSleeping) {
         self.isSleeping = NO;
-        debug_log("Screen is waking!");
 
         // Restarting timer as needed.
         NSTimeInterval nextUpdateTime = [self.nextUpdateTime timeIntervalSinceDate:[NSDate date]];
@@ -399,7 +393,6 @@ enum ConditionCode {
         [self _restartTimerWithInterval:nextUpdateTime];
     } else if (!screenIsWaking && !self.isSleeping) {
         self.isSleeping = YES;
-        debug_log("Screen is going to sleep!");
 
         // Stop update timer when device is sleeping because it's not needed
         [self.updateTimer invalidate];
@@ -419,8 +412,6 @@ enum ConditionCode {
 
     // Create a DCTemperature object and return the temperature in the user's unit
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity temperature].fahrenheit];
-    debug_log("City: %s, Temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
-
     return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUnit:self.temperatureUnit], DEGREE_SYMBOL];
 }
 
@@ -437,8 +428,6 @@ enum ConditionCode {
 
     // Create a DCTemperature object and return the temperature in the user's unit
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity temperature].fahrenheit];
-    debug_log("City: %s, Temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
-
     return [temperature temperatureInUnit:self.temperatureUnit];
 }
 
@@ -455,8 +444,6 @@ enum ConditionCode {
 
     // Create a DCTemperature object and return the feelsLike temperature in the user's unit
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity feelsLike].fahrenheit];
-    debug_log("City: %s, Feels like temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
-
     return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUnit:self.temperatureUnit], DEGREE_SYMBOL];
 }
 
@@ -473,8 +460,6 @@ enum ConditionCode {
 
     // Create a DCTemperature object and return the feelsLike temperature in the user's unit
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity feelsLike].fahrenheit];
-    debug_log("City: %s, Feels like temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
-
     return [temperature temperatureInUnit:self.temperatureUnit];
 }
 
@@ -740,8 +725,6 @@ enum ConditionCode {
         return @"Wind Speed Not Available";
 
     DCWindSpeed *windSpeed = [[DCWindSpeed alloc] init:self.currentCity.windSpeed];
-    debug_log("City: %s, Wind speed: %s", [self cityString].UTF8String, [windSpeed windSpeedInUserUnitString].UTF8String);
-
     return [windSpeed windSpeedInUnitString:self.speedUnit];
 }
 
@@ -757,8 +740,6 @@ enum ConditionCode {
         return 0;
 
     DCWindSpeed *windSpeed = [[DCWindSpeed alloc] init:self.currentCity.windSpeed];
-    debug_log("City: %s, Wind speed: %s", [self cityString].UTF8String, [windSpeed windSpeedInUserUnitString].UTF8String);
-
     return [windSpeed windSpeedInUnit:self.speedUnit];
 }
 
@@ -773,7 +754,6 @@ enum ConditionCode {
     if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
         return @"Wind Direction Not Available";
 
-    //return self.currentCity.windDirection;
     return [self.currentCity windDirectionAsString:self.currentCity.windDirection];
 }
 
