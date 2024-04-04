@@ -25,6 +25,12 @@
     } \
 } while (0)
 
+#define method_log(fmt, ...) do { \
+    if (LDCW_DEBUG) { \
+        NSLog((@"[LDCW_DEBUG] %s => " fmt), __PRETTY_FUNCTION__, ##__VA_ARGS__); \
+    } \
+} while (0)
+
 enum ConditionCode {
     Tornado = 0,
     TropicalStorm = 1,
@@ -79,6 +85,8 @@ enum ConditionCode {
 @implementation DCWeather
 
 + (instancetype)sharedInstance {
+    method_log();
+    
 	static dispatch_once_t p = 0;
 	static __strong DCWeather *_sharedSelf = nil;
 	dispatch_once(&p, ^{
@@ -92,6 +100,8 @@ enum ConditionCode {
 }
 
 - (instancetype)init {
+    method_log();
+
     self = [super init];
     if (self) {
         // Initialization code here
@@ -161,31 +171,42 @@ enum ConditionCode {
 }
 
 - (BOOL)locationServicesEnabled {
+    method_log();
+
     // Check if local weather is enabled and location services are enabled
     if (![[WeatherPreferences sharedPreferences] isLocalWeatherEnabled] || ![CLLocationManager locationServicesEnabled]) {
+        debug_log("Location services are not enabled");
         return NO;
     }
+    debug_log("Location services are enabled");
     return YES;
 }
 
 - (BOOL)locationAuthorizationAlways {
+    method_log();
+
     // Check if location services are enabled
     if (![self locationServicesEnabled])
         return NO;
 
     // Check if location services are authorized
-    if ([objc_getClass("CLLocationManager") authorizationStatusForBundleIdentifier:@"com.apple.weather"] == kCLAuthorizationStatusAuthorizedAlways)
+    if ([objc_getClass("CLLocationManager") authorizationStatusForBundleIdentifier:@"com.apple.weather"] == kCLAuthorizationStatusAuthorizedAlways) {
+        debug_log("Location services are authorized");
         return YES;
+    }
+    debug_log("Location services are not authorized");
     return NO;
 }
 
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather {
     // Set the conditionIncludesSevereWeather property
+    method_log(@"conditionIncludesSevereWeather: %d", conditionIncludesSevereWeather);
     _conditionIncludesSevereWeather = conditionIncludesSevereWeather;
 }
 
 - (void)setAutoUpdateInvervalInSeconds:(NSInteger)seconds {
     // Set the update interval in seconds
+    method_log(@"seconds: %ld", seconds);
     self.updateInterval = [[DCTime alloc] initWithSeconds:seconds];
     self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
     [self _restartTimerWithInterval:[self.updateInterval seconds]];
@@ -193,6 +214,7 @@ enum ConditionCode {
 
 - (void)setAutoUpdateInvervalInMinutes:(NSInteger)minutes {
     // Set the update interval in minutes
+    method_log(@"minutes: %ld", minutes);
     self.updateInterval = [[DCTime alloc] initWithMinutes:minutes];
     self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
     [self _restartTimerWithInterval:[self.updateInterval seconds]];
@@ -200,6 +222,7 @@ enum ConditionCode {
 
 - (void)setAutoUpdateInvervalInHours:(NSInteger)hours {
     // Set the update interval in hours
+    method_log(@"hours: %ld", hours);
     self.updateInterval = [[DCTime alloc] initWithHours:hours];
     self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
     [self _restartTimerWithInterval:[self.updateInterval seconds]];
@@ -207,26 +230,31 @@ enum ConditionCode {
 
 - (void)setDistanceThresholdToConsiderLocationChangeInMeters:(double)distanceThreshold {
     // Set the distance threshold in meters
+    method_log(@"distanceThreshold: %f", distanceThreshold);
     self.distanceThreshold = [[DCDistance alloc] initWithMeters:distanceThreshold];
 }
 
 - (void)setDistanceThresholdToConsiderLocationChangeInKilometers:(double)distanceThreshold {
     // Set the distance threshold in kilometers
+    method_log(@"distanceThreshold: %f", distanceThreshold);
     self.distanceThreshold = [[DCDistance alloc] initWithKilometers:distanceThreshold];
 }
 
 - (void)setDistanceThresholdToConsiderLocationChangeInFeet:(double)distanceThreshold {
     // Set the distance threshold in feet
+    method_log(@"distanceThreshold: %f", distanceThreshold);
     self.distanceThreshold = [[DCDistance alloc] initWithFeet:distanceThreshold];
 }
 
 - (void)setDistanceThresholdToConsiderLocationChangeInYards:(double)distanceThreshold {
     // Set the distance threshold in yards
+    method_log(@"distanceThreshold: %f", distanceThreshold);
     self.distanceThreshold = [[DCDistance alloc] initWithYards:distanceThreshold];
 }
 
 - (void)setDistanceThresholdToConsiderLocationChangeInMiles:(double)distanceThreshold {
     // Set the distance threshold in miles
+    method_log(@"distanceThreshold: %f", distanceThreshold);
     self.distanceThreshold = [[DCDistance alloc] initWithMiles:distanceThreshold];
 }
 
@@ -254,7 +282,7 @@ enum ConditionCode {
 }
 
 - (void)requestRefresh {
-    debug_log("Requesting a refresh");
+    method_log();
 
     // Force a new location update if possible
     if (self.weatherLocationManager)
@@ -268,7 +296,7 @@ enum ConditionCode {
 }
 
 - (void)_restartTimerWithInterval:(NSTimeInterval)interval {
-    debug_log("Restarting timer with interval: %f", interval);
+    method_log(@"interval: %f", interval);
 
     // Invalidate the current timer
     if (self.updateTimer)
@@ -286,17 +314,21 @@ enum ConditionCode {
 }
 
 - (void)_updateTimerEnded:(NSTimer*)timer {
+    method_log(@"timer: %@", timer);
+
     [self requestRefresh];
 }
 
 - (void)_refreshWeather {
-    debug_log("Refreshing weather");
+    method_log();
 
     // Refresh the weather
     [self _refreshWeatherWithLocation:self.currentCity.location];
 }
 
 - (void)_refreshWeatherWithLocation:(CLLocation*)location {
+    method_log(@"location: %@", location);
+
     // Set update delegate
     if ([self.currentCity respondsToSelector:@selector(associateWithDelegate:)])
         [self.currentCity associateWithDelegate:self];
@@ -333,6 +365,8 @@ enum ConditionCode {
 }
 
 - (NSString *)temperatureString {
+    method_log();
+
     // Check if location services are enabled
     if (![self locationServicesEnabled])
         return @"Temperature Not Available";
@@ -349,6 +383,8 @@ enum ConditionCode {
 }
 
 - (NSString *)conditionString {
+    method_log();
+
     // Check if location services are enabled
     if (![self locationServicesEnabled])
         return @"Condition Not Available";
@@ -470,6 +506,8 @@ enum ConditionCode {
 }
 
 - (UIImage *)conditionImage {
+    method_log();
+
     // Check if location services are enabled
     if (![self locationServicesEnabled])
         return nil;
@@ -595,6 +633,8 @@ enum ConditionCode {
 }
 
 - (NSString *)cityString {
+    method_log();
+
     // Check if location services are enabled
     if (![self locationServicesEnabled])
         return @"City Not Available";
@@ -605,6 +645,8 @@ enum ConditionCode {
 #pragma mark CLLocationManagerDelegate methods
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray*)locations {
+    method_log(@"manager: %@, locations: %@", manager, locations);
+
     if (locations.count > 0) {
         CLLocation *newestLocation = [locations lastObject]; // Get the newest location
         
@@ -632,6 +674,8 @@ enum ConditionCode {
 #pragma mark City delegate methods
 
 - (void)cityDidFinishWeatherUpdate:(City*)city {
+    method_log(@"city: %@", city);
+
     // New city, so update the saved current city
     self.currentCity = city;
 
