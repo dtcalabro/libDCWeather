@@ -20,9 +20,9 @@ A weather fetching library for jailbroken iOS devices
 - [X] Current condition string (48 conditions not including severe weather alerts)
 - [X] Current condition image (supports day and night images)
 - [X] Current temperature (supports Celsius and Fahrenheit, but defaults to the user's prefered unit)
+- [X] Feels like temperature (supports Celsius and Fahrenheit, but defaults to the user's prefered unit)
 - [X] Current city name
 - [ ] Daily high and low temperatures
-- [ ] Feels like temperature
 - [ ] Humidity
 - [ ] Wind speed and direction
 - [ ] Visibility
@@ -146,6 +146,12 @@ Weather will automatically update based on the auto update interval you set. How
 NSString *temperature = [weather temperatureString];
 ```
 
+### How to get current feels like temperature
+
+```objc
+NSString *feelsLikeTemperature = [weather feelsLikeTemperatureString];
+```
+
 ### How to get current condition string
 
 ```objc
@@ -166,13 +172,19 @@ NSString *city = [weather cityName];
 
 ### How to listen for updates
 
-You can listen for updates by adding an observer to the default notification center. Currently, you can listen for the temperature, location, and condition changes.
+You can listen for updates by adding an observer to the default notification center. Currently, you can listen for the temperature, feels like temperature, location, and condition changes.
 
 ```objc
 // Assuming you wish to invoke the temperatureChanged method when the temperature changes
 [[NSNotificationCenter defaultCenter] addObserver:self
                                       selector:@selector(temperatureChanged)
                                       name:@"kDCWeatherTemperatureChange"
+                                      object:nil];
+
+// Assuming you wish to invoke the feelsLikeTemperatureChanged method when the feels like temperature changes
+[[NSNotificationCenter defaultCenter] addObserver:self
+                                      selector:@selector(feelsLikeTemperatureChanged)
+                                      name:@"kDCWeatherFeelsLikeTemperatureChange"
                                       object:nil];
 
 // Assuming you wish to invoke the locationChanged method when the location changes

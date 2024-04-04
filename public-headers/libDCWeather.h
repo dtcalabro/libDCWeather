@@ -14,6 +14,7 @@
 - (void)setDistanceThresholdToConsiderLocationChangeInMiles:(double)distanceThreshold;
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather;
 - (NSString *)temperatureString;
+- (NSString *)feelsLikeTemperatureString;
 - (NSString *)conditionString;
 - (UIImage *)conditionImage;
 - (NSString *)cityString;

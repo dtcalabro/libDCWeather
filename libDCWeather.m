@@ -7,12 +7,13 @@
 #define DEGREE_SYMBOL @"\u00B0"
 
 // external
-#define TEMPERATURE_CHANGE_NOTIFICATION @"kDCWeatherTemperatureChange"
-#define LOCATION_CHANGE_NOTIFICATION    @"kDCWeatherLocationChange"
-#define CONDITION_CHANGE_NOTIFICATION   @"kDCWeatherConditionChange"
+#define TEMPERATURE_CHANGE_NOTIFICATION             @"kDCWeatherTemperatureChange"
+#define FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION  @"kDCWeatherFeelsLikeTemperatureChange"
+#define LOCATION_CHANGE_NOTIFICATION                @"kDCWeatherLocationChange"
+#define CONDITION_CHANGE_NOTIFICATION               @"kDCWeatherConditionChange"
 
 // internal
-#define DEVICE_WAKE_NOTIFICATION        @"kDCWeatherDeviceWake"
+#define DEVICE_WAKE_NOTIFICATION                    @"kDCWeatherDeviceWake"
 
 #define debug_log(fmt, ...) do { \
     if (LDCW_DEBUG) { \
@@ -86,7 +87,7 @@ enum ConditionCode {
 
 + (instancetype)sharedInstance {
     method_log();
-    
+
 	static dispatch_once_t p = 0;
 	static __strong DCWeather *_sharedSelf = nil;
 	dispatch_once(&p, ^{
@@ -138,6 +139,10 @@ enum ConditionCode {
                 options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
                 context:NULL];
             [self.currentCity addObserver:self
+                forKeyPath:@"feelsLike"
+                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                context:NULL];
+            [self.currentCity addObserver:self
                 forKeyPath:@"location"
                 options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
                 context:NULL];
@@ -165,6 +170,7 @@ enum ConditionCode {
 - (void)dealloc {
     // Remove observers
     [self.currentCity removeObserver:self forKeyPath:@"temperature"];
+    [self.currentCity removeObserver:self forKeyPath:@"feelsLike"];
     [self.currentCity removeObserver:self forKeyPath:@"location"];
     [self.currentCity removeObserver:self forKeyPath:@"conditionCode"];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:DEVICE_WAKE_NOTIFICATION object:nil];
@@ -270,6 +276,10 @@ enum ConditionCode {
         // The temperature has changed
         debug_log("Temperature has changed");
         [[NSNotificationCenter defaultCenter] postNotificationName:TEMPERATURE_CHANGE_NOTIFICATION object:self];
+    } else if ([keyPath isEqualToString:@"feelsLike"]) {
+        // The feelsLike temperature has changed
+        debug_log("Feels like temperature has changed");
+        [[NSNotificationCenter defaultCenter] postNotificationName:FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION object:self];
     } else if ([keyPath isEqualToString:@"location"]) {
         // The location has changed
         debug_log("Location has changed");
@@ -378,6 +388,24 @@ enum ConditionCode {
     // Create a DCTemperature object and return the temperature in the user's unit
     DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity temperature].fahrenheit];
     debug_log("City: %s, Temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
+
+    return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUserUnit], DEGREE_SYMBOL];
+}
+
+- (NSString *)feelsLikeTemperatureString {
+    method_log();
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return @"Feels Like Temperature Not Available";
+
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the feels like temperature is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return @"Feels Like Temperature Not Available";
+
+    // Create a DCTemperature object and return the feelsLike temperature in the user's unit
+    DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity feelsLike].fahrenheit];
+    debug_log("City: %s, Feels like temperature: %.0f", [self cityString].UTF8String, [temperature temperatureInUserUnit]);
 
     return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUserUnit], DEGREE_SYMBOL];
 }
