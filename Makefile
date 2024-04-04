@@ -1,11 +1,8 @@
 LIBRARY_NAME = libDCWeather
 
 $(LIBRARY_NAME)_FILES = $(wildcard *.m)
-$(LIBRARY_NAME)_CFLAGS = -fobjc-arc -I$(THEOS_PROJECT_DIR)/headers -ferror-limit=0
-#$(LIBRARY_NAME)_CFLAGS = -fobjc-arc -ferror-limit=0
+$(LIBRARY_NAME)_CFLAGS = -fobjc-arc -I$(THEOS_PROJECT_DIR)/headers
 $(LIBRARY_NAME)_FRAMEWORKS = UIKit CoreLocation
-#$(LIBRARY_NAME)_PRIVATE_FRAMEWORKS = Weather
-#$(LIBRARY_NAME)_PRIVATE_FRAMEWORKS = Weather SystemWake SpringBoard
 $(LIBRARY_NAME)_PRIVATE_FRAMEWORKS = Weather SpringBoard
 $(LIBRARY_NAME)_INSTALL_PATH = /usr/lib
 
@@ -17,8 +14,6 @@ else
 	SIM_BUILD = 0
 	TARGET := iphone:clang:latest:15.0
 	INSTALL_TARGET_PROCESSES = SpringBoard
-#SDK_PATH = $(THEOS)/sdks/iPhoneOS14.5.sdk/
-#SDK_PATH = $(THEOS)/sdks/iPhoneOS16.0.sdk/
 	SDK_PATH = $(THEOS)/sdks/iPhoneOS16.5.sdk/
 	SYSROOT = $(SDK_PATH)
 
@@ -48,10 +43,8 @@ endif
 
 ifeq ($(DEBUG), 1) 
 	ifeq ($(FINALPACKAGE), 0)
-		$(LIBRARY_NAME)_CFLAGS += -Wno-unused-variable -Wno-unused-function
+		$(LIBRARY_NAME)_CFLAGS += -Wno-unused-variable -Wno-unused-function -ferror-limit=0
 	endif
 endif
 
 include $(THEOS_MAKE_PATH)/library.mk
-#SUBPROJECTS += dummytweak
-#include $(THEOS_MAKE_PATH)/aggregate.mk
