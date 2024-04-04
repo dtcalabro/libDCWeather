@@ -16,7 +16,7 @@ ifeq ($(SIM_BUILD), 1)
 else
 	SIM_BUILD = 0
 	TARGET := iphone:clang:latest:15.0
-#INSTALL_TARGET_PROCESSES = SpringBoard
+	INSTALL_TARGET_PROCESSES = SpringBoard
 #SDK_PATH = $(THEOS)/sdks/iPhoneOS14.5.sdk/
 #SDK_PATH = $(THEOS)/sdks/iPhoneOS16.0.sdk/
 	SDK_PATH = $(THEOS)/sdks/iPhoneOS16.5.sdk/
