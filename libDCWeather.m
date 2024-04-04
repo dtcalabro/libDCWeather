@@ -97,6 +97,7 @@ enum ConditionCode {
         [_sharedSelf setAutoUpdateInvervalInMinutes:5];                             // Default to update every 5 minutes
         [_sharedSelf setDistanceThresholdToConsiderLocationChangeInMiles:1];        // Default to 1 mile
         [_sharedSelf setTemperatureUnit:[_sharedSelf userTemperatureUnit]];         // Default to the user's temperature unit
+        [_sharedSelf setSpeedUnit:[_sharedSelf userSpeedUnit]];                     // Default to the user's speed unit
 	});
 	return _sharedSelf;
 }
@@ -111,6 +112,7 @@ enum ConditionCode {
         [self setAutoUpdateInvervalInMinutes:5];                                    // Default to update every 5 minutes
         [self setDistanceThresholdToConsiderLocationChangeInMiles:1];               // Default to 1 mile
         [self setTemperatureUnit:[self userTemperatureUnit]];                       // Default to the user's temperature unit
+        [self setSpeedUnit:[self userSpeedUnit]];                                   // Default to the user's speed unit
 
         // Initialize the WeatherLocationManager
         self.weatherLocationManager = [objc_getClass("WeatherLocationManager") sharedWeatherLocationManager];
@@ -278,6 +280,20 @@ enum ConditionCode {
     // Set the temperature unit
     method_log(@"unit: %d", unit);
     _temperatureUnit = unit;
+}
+
+- (enum SpeedUnit)userSpeedUnit {
+    // Get the user's speed unit
+    method_log();
+    if ([[[[[objc_getClass("WeatherWindSpeedFormatter") alloc] init] locale] objectForKey:NSLocaleUsesMetricSystem] boolValue])
+        return KiloMetersPerHour;
+    return MilesPerHour;
+}
+
+- (void)setSpeedUnit:(enum SpeedUnit)unit {
+    // Set the speed unit
+    method_log(@"unit: %d", unit);
+    _speedUnit = unit;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
@@ -710,6 +726,55 @@ enum ConditionCode {
         default:
             return [UIImage systemImageNamed:@"questionmark.circle.fill"];
     }
+}
+
+- (NSString *)windSpeedString {
+    method_log();
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return @"Wind Speed Not Available";
+
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the wind speed is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return @"Wind Speed Not Available";
+
+    DCWindSpeed *windSpeed = [[DCWindSpeed alloc] init:self.currentCity.windSpeed];
+    debug_log("City: %s, Wind speed: %s", [self cityString].UTF8String, [windSpeed windSpeedInUserUnitString].UTF8String);
+
+    return [windSpeed windSpeedInUnitString:self.speedUnit];
+}
+
+- (float)windSpeed {
+    method_log();
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return 0;
+
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the temperature is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return 0;
+
+    DCWindSpeed *windSpeed = [[DCWindSpeed alloc] init:self.currentCity.windSpeed];
+    debug_log("City: %s, Wind speed: %s", [self cityString].UTF8String, [windSpeed windSpeedInUserUnitString].UTF8String);
+
+    return [windSpeed windSpeedInUnit:self.speedUnit];
+}
+
+- (NSString *)windDirectionString {
+    method_log();
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return @"Wind Direction Not Available";
+
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the temperature is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return @"Wind Direction Not Available";
+
+    //return self.currentCity.windDirection;
+    return [self.currentCity windDirectionAsString:self.currentCity.windDirection];
 }
 
 - (NSString *)cityString {

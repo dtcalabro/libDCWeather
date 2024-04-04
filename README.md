@@ -21,10 +21,11 @@ A weather fetching library for jailbroken iOS devices
 - [X] Current condition image (supports day and night images)
 - [X] Current temperature (supports Celsius, Fahrenheit, and Kelvin, but defaults to the user's prefered unit)
 - [X] Feels like temperature (supports Celsius, Fahrenheit, and Kelvin, but defaults to the user's prefered unit)
+- [X] Wind speed (supports kilometers per hour and miles per hour, but defaults to the user's prefered unit)
+- [X] Wind direction
 - [X] Current city name
 - [ ] Daily high and low temperatures
 - [ ] Humidity
-- [ ] Wind speed and direction
 - [ ] Visibility
 
 ## Features
@@ -35,6 +36,7 @@ A weather fetching library for jailbroken iOS devices
 - [X] Set the distance threshold to consider the location as changed (default is 1 mile)
 - [X] Choose whether to support severe weather alerts, which applies to both condition strings and images (default is NO)
 - [X] Set the temperature unit (default is the user's prefered unit)
+- [X] Set the speed unit (default is the user's prefered unit)
 - [ ] Multilingual support
 
 ## I am a user, where can I get this?
@@ -148,6 +150,18 @@ You can set the temperature unit to either Celsius, Fahrenheit, or Kelvin. The d
 [weather setTemperatureUnit:Kelvin];
 ```
 
+### Setting the speed unit
+
+You can set the speed unit to either kilometers per hour or miles per hour. The default is the user's prefered unit but you can change it to your liking.
+
+```objc
+// To set it to kilometers per hour
+[weather setSpeedUnit:KilometersPerHour];
+
+// To set it to miles per hour
+[weather setSpeedUnit:MilesPerHour];
+```
+
 ### Forcing a weather update
 
 Weather will automatically update based on the auto update interval you set. However, if you wish to force a weather update, you can do so at any point by calling the following method.
@@ -190,6 +204,18 @@ NSString *condition = [weather conditionString];
 
 ```objc
 UIImage *conditionImage = [weather conditionImage];
+```
+
+### How to get current wind speed string
+
+```objc
+NSString *windSpeed = [weather windSpeedString];
+```
+
+### How to get current wind speed
+
+```objc
+double windSpeed = [weather windSpeed];
 ```
 
 ### How to get current city name

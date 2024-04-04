@@ -6,6 +6,7 @@
 #import "DCDistance.h"
 #import "DCTime.h"
 #import "DCTemperature.h"
+#import "DCWind.h"
 
 @interface SBScreenWakeAnimationController : NSObject
 @end
@@ -18,6 +19,7 @@
 @property (nonatomic, retain) NSDate *nextUpdateTime;
 @property (nonatomic) BOOL conditionIncludesSevereWeather;
 @property (nonatomic) enum TemperatureUnit temperatureUnit;
+@property (nonatomic) enum SpeedUnit speedUnit;
 @property (nonatomic) DCTime *updateInterval;
 @property (nonatomic) DCDistance *distanceThreshold;
 @property (nonatomic) BOOL isSleeping;
@@ -36,12 +38,19 @@
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather;
 - (enum TemperatureUnit)userTemperatureUnit;
 - (void)setTemperatureUnit:(enum TemperatureUnit)unit;
+- (enum SpeedUnit)userSpeedUnit;
+- (void)setSpeedUnit:(enum SpeedUnit)unit;
 - (NSString *)temperatureString;
 - (double)temperature;
 - (NSString *)feelsLikeTemperatureString;
 - (double)feelsLikeTemperature;
 - (NSString *)conditionString;
 - (UIImage *)conditionImage;
+- (float)visibility;
+- (NSString *)windSpeedString;
+- (float)windSpeed;
+- (NSString *)windDirectionString;
+- (float)pressure;
 - (NSString *)cityString;
 @end
 

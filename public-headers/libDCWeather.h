@@ -7,6 +7,11 @@ typedef enum TemperatureUnit {
     Kelvin
 } TemperatureUnit;
 
+typedef enum SpeedUnit {
+    KiloMetersPerHour,
+    MilesPerHour
+} SpeedUnit;
+
 @interface DCWeather : NSObject
 + (instancetype)sharedInstance;
 - (void)requestRefresh;
@@ -20,11 +25,15 @@ typedef enum TemperatureUnit {
 - (void)setDistanceThresholdToConsiderLocationChangeInMiles:(double)distanceThreshold;
 - (void)conditionIncludesSevereWeather:(BOOL)conditionIncludesSevereWeather;
 - (void)setTemperatureUnit:(enum TemperatureUnit)unit;
+- (void)setSpeedUnit:(enum SpeedUnit)unit;
 - (NSString *)temperatureString;
 - (double)temperature;
 - (NSString *)feelsLikeTemperatureString;
 - (double)feelsLikeTemperature;
 - (NSString *)conditionString;
 - (UIImage *)conditionImage;
+- (NSString *)windSpeedString;
+- (float)windSpeed;
+- (NSString *)windDirectionString;
 - (NSString *)cityString;
 @end
