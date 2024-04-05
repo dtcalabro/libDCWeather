@@ -218,10 +218,10 @@ NSString *windSpeed = [weather windSpeedString];
 double windSpeed = [weather windSpeed];
 ```
 
-### How to get the current city name
+### How to get the current city string
 
 ```objc
-NSString *city = [weather cityName];
+NSString *city = [weather cityString];
 ```
 
 ### How to listen for updates
