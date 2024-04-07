@@ -7,7 +7,7 @@ A weather fetching library for jailbroken iOS devices
 [![GitHub Stars](https://img.shields.io/github/stars/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/network/members)
 [![GitHub Issues](https://img.shields.io/github/issues/dtcalabro/libDCWeather)](https://github.com/dtcalabro/libDCWeather/issues)
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## Overview
 
