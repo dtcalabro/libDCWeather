@@ -43,7 +43,7 @@ A weather fetching library for jailbroken iOS devices
 
 I should preface by saying that this library does not do anything on its own. It is meant to be used by developers in their projects.
 
-With that being said, if you still wish to install this library, it can be downloaded from my repository at <https://dtcalabro.github.io/repo>.
+With that being said, if you still wish to install this library, it can be downloaded from havoc at <https://havoc.app/package/libdcweather>.
 
 ## I am a developer; how do I integrate this into my project?
 
