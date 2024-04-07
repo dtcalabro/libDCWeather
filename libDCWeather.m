@@ -17,12 +17,7 @@
 
 #define debug_log(fmt, ...) do { \
     if (LDCW_DEBUG) { \
-        char *str = NULL; \
-        asprintf(&str, fmt, ##__VA_ARGS__); \
-        if (str) { \
-            os_log(OS_LOG_DEFAULT, "[LDCW_DEBUG] %s", str); \
-            free(str); \
-        } \
+        NSLog((@"[LDCW_DEBUG] " fmt), ##__VA_ARGS__); \
     } \
 } while (0)
 
