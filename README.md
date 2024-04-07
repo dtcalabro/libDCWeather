@@ -218,6 +218,12 @@ NSString *windSpeed = [weather windSpeedString];
 double windSpeed = [weather windSpeed];
 ```
 
+### How to get the current wind direction string
+
+```objc
+NSString *windDirection = [weather windDirectionString];
+```
+
 ### How to get the current city string
 
 ```objc
