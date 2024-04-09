@@ -130,6 +130,15 @@ enum ConditionCode {
             WeatherPreferences *weatherPreferences = [[WeatherPreferences alloc] init];
             [weatherPreferences setLocalWeatherEnabled:YES];
             self.currentCity = [weatherPreferences localWeatherCity];
+
+            // Secondary check for current city, as we have a fallback method of getting it, specifically for versions lower than iOS 16 where it broke
+            if (!self.currentCity) {
+                TWCLocationUpdater *locationUpdater = [objc_getClass("TWCLocationUpdater") sharedLocationUpdater];
+                if ([locationUpdater respondsToSelector:@selector(currentCity)]) {
+                    self.currentCity = [locationUpdater currentCity];
+                }
+            }
+
             [self.currentCity update];
 
             // Add observers
