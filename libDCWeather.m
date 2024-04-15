@@ -93,8 +93,8 @@ enum ConditionCode {
         [_sharedSelf conditionIncludesSevereWeather:NO];                            // Default to not include severe weather
         [_sharedSelf setAutoUpdateInvervalInMinutes:5];                             // Default to update every 5 minutes
         [_sharedSelf setDistanceThresholdToConsiderLocationChangeInMiles:1];        // Default to 1 mile
-        [_sharedSelf setTemperatureUnit:[_sharedSelf userTemperatureUnit]];         // Default to the user's temperature unit
-        [_sharedSelf setSpeedUnit:[_sharedSelf userSpeedUnit]];                     // Default to the user's speed unit
+        [_sharedSelf setTemperatureUnit:SystemTemperatureUnit];                     // Default to the user's temperature unit
+        [_sharedSelf setSpeedUnit:SystemSpeedUnit];                                 // Default to the user's speed unit
 	});
 	return _sharedSelf;
 }
@@ -108,8 +108,8 @@ enum ConditionCode {
         [self conditionIncludesSevereWeather:NO];                                   // Default to not include severe weather
         [self setAutoUpdateInvervalInMinutes:5];                                    // Default to update every 5 minutes
         [self setDistanceThresholdToConsiderLocationChangeInMiles:1];               // Default to 1 mile
-        [self setTemperatureUnit:[self userTemperatureUnit]];                       // Default to the user's temperature unit
-        [self setSpeedUnit:[self userSpeedUnit]];                                   // Default to the user's speed unit
+        [self setTemperatureUnit:SystemTemperatureUnit];                            // Default to the user's temperature unit
+        [self setSpeedUnit:SystemSpeedUnit];                                        // Default to the user's speed unit
 
         // Initialize the WeatherLocationManager
         self.weatherLocationManager = [objc_getClass("WeatherLocationManager") sharedWeatherLocationManager];
@@ -301,7 +301,7 @@ enum ConditionCode {
 - (enum SpeedUnit)userSpeedUnit {
     // Get the user's speed unit
     method_log();
-    if ([[[[[objc_getClass("WeatherWindSpeedFormatter") alloc] init] locale] objectForKey:NSLocaleUsesMetricSystem] boolValue])
+    if ([[[[[objc_getClass("WeatherWindSpeedFormatter") alloc] init] locale] objectForKey:NSLocaleMeasurementSystem] isEqualToString:@"Metric"])
         return KiloMetersPerHour;
     return MilesPerHour;
 }

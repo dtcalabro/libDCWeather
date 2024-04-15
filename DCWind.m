@@ -14,7 +14,7 @@
 }
 
 - (BOOL)usesMetricSystem {
-    return [[[[[objc_getClass("WeatherWindSpeedFormatter") alloc] init] locale] objectForKey:NSLocaleUsesMetricSystem] boolValue];
+    return [[[[[objc_getClass("WeatherWindSpeedFormatter") alloc] init] locale] objectForKey:NSLocaleMeasurementSystem] isEqualToString:@"Metric"];
 }
 
 - (double)windSpeedInUserUnit {
@@ -27,6 +27,8 @@
 
 - (double)windSpeedInUnit:(enum SpeedUnit)unit {
     switch (unit) {
+        case SystemSpeedUnit:
+            return [self windSpeedInUserUnit];
         case KiloMetersPerHour:
             return [self windSpeedInKiloMetersPerHour];
         case MilesPerHour:
@@ -36,6 +38,8 @@
 
 - (NSString *)windSpeedInUnitString:(enum SpeedUnit)unit {
     switch (unit) {
+        case SystemSpeedUnit:
+            return [self windSpeedInUserUnitString];
         case KiloMetersPerHour:
             return [self windSpeedInKiloMetersPerHourString];
         case MilesPerHour:

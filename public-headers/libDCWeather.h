@@ -2,12 +2,14 @@
 #import <Foundation/Foundation.h>
 
 typedef enum TemperatureUnit {
+    SystemTemperatureUnit,
     Celsius,
     Fahrenheit,
     Kelvin
 } TemperatureUnit;
 
 typedef enum SpeedUnit {
+    SystemSpeedUnit,
     KiloMetersPerHour,
     MilesPerHour
 } SpeedUnit;

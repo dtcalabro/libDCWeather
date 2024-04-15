@@ -2,9 +2,10 @@
 #import <Foundation/Foundation.h>
 
 enum TemperatureUnit {
-    Celsius = 0,
-    Fahrenheit = 1,
-    Kelvin = 2
+    SystemTemperatureUnit,
+    Celsius,
+    Fahrenheit,
+    Kelvin
 };
 
 @interface DCTemperature : NSObject

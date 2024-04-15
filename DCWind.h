@@ -2,6 +2,7 @@
 #import <Foundation/Foundation.h>
 
 enum SpeedUnit {
+    SystemSpeedUnit,
     KiloMetersPerHour,
     MilesPerHour
 };

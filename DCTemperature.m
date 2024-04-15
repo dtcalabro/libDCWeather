@@ -19,6 +19,8 @@
 
 - (double)temperatureInUnit:(enum TemperatureUnit)unit {
     switch (unit) {
+        case SystemTemperatureUnit:
+            return [self temperatureInUserUnit];
         case Celsius:
             return [self temperatureInCelsius];
         case Fahrenheit:
