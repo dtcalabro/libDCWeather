@@ -32,6 +32,12 @@
     } \
 } while (0)
 
+#define log_if_null(obj) do { \
+    if ((obj) == nil) { \
+        NSLog(@"[LDCW_DEBUG] %s:%d (%s) => %@ is NULL", __FILE__, __LINE__, __PRETTY_FUNCTION__, @#obj); \
+    } \
+} while (0)
+
 enum ConditionCode {
     Tornado = 0,
     TropicalStorm = 1,
@@ -116,6 +122,7 @@ enum ConditionCode {
 
         // Initialize the WeatherLocationManager
         self.weatherLocationManager = [objc_getClass("WeatherLocationManager") sharedWeatherLocationManager];
+        log_if_null(self.weatherLocationManager);
         [self.weatherLocationManager setDelegate:self];
         self.weatherLocationManager.updateInterval = [self.updateInterval seconds];
         self.weatherLocationManager.locationUpdatesEnabled = YES;
@@ -140,14 +147,18 @@ enum ConditionCode {
 
             // Get the local weather city and update it
             self.weatherPreferences = [WeatherPreferences sharedPreferences];
+            log_if_null(self.weatherPreferences);
             [self.weatherPreferences setLocalWeatherEnabled:YES];
             self.currentCity = [self.weatherPreferences localWeatherCity];
+            log_if_null(self.currentCity);
 
             // Secondary check for current city, as we have a fallback method of getting it, specifically for versions lower than iOS 16 where it broke
             if (!self.currentCity) {
                 TWCLocationUpdater *locationUpdater = [objc_getClass("TWCLocationUpdater") sharedLocationUpdater];
+                log_if_null(locationUpdater);
                 if ([locationUpdater respondsToSelector:@selector(currentCity)]) {
                     self.currentCity = [locationUpdater currentCity];
+                    log_if_null(self.currentCity);
                 }
             }
 
@@ -420,6 +431,8 @@ enum ConditionCode {
 
 - (void)_refreshWeather {
     method_log();
+    log_if_null(self.currentCity);
+    log_if_null(self.currentCity.location);
 
     // Refresh the weather
     [self _refreshWeatherWithLocation:self.currentCity.location];
@@ -427,6 +440,8 @@ enum ConditionCode {
 
 - (void)_refreshWeatherWithLocation:(CLLocation*)location {
     method_log(@"location: %@", location);
+    log_if_null(location);
+    log_if_null(self.currentCity);
 
     // Set update delegate
     if ([self.currentCity respondsToSelector:@selector(associateWithDelegate:)])
@@ -437,6 +452,7 @@ enum ConditionCode {
     // Force a location update
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         TWCLocationUpdater *locationUpdater = [objc_getClass("TWCLocationUpdater") sharedLocationUpdater];
+        log_if_null(locationUpdater);
         [locationUpdater updateWeatherForLocation:location city:self.currentCity];
     });
 }
