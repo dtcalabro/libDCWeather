@@ -258,6 +258,18 @@ You can listen for updates by adding an observer to the default notification cen
                                       selector:@selector(conditionChanged)
                                       name:@"kDCWeatherConditionChange"
                                       object:nil];
+
+// Assuming you wish to invoke the windSpeedChanged method when the wind speed changes
+[[NSNotificationCenter defaultCenter] addObserver:self
+                                      selector:@selector(windSpeedChanged)
+                                      name:@"kDCWeatherWindSpeedChange"
+                                      object:nil];
+
+// Assuming you wish to invoke the windDirectionChanged method when the wind direction changes
+[[NSNotificationCenter defaultCenter] addObserver:self
+                                      selector:@selector(windDirectionChanged)
+                                      name:@"kDCWeatherWindDirectionChange"
+                                      object:nil];
 ```
 
 ## Donations

@@ -11,6 +11,8 @@
 #define FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION  @"kDCWeatherFeelsLikeTemperatureChange"
 #define LOCATION_CHANGE_NOTIFICATION                @"kDCWeatherLocationChange"
 #define CONDITION_CHANGE_NOTIFICATION               @"kDCWeatherConditionChange"
+#define WIND_SPEED_CHANGE_NOTIFICATION              @"kDCWeatherWindSpeedChange"
+#define WIND_DIRECTION_CHANGE_NOTIFICATION          @"kDCWeatherWindDirectionChange"
 
 // internal
 #define DEVICE_WAKE_NOTIFICATION                    @"kDCWeatherDeviceWake"
@@ -158,6 +160,14 @@ enum ConditionCode {
                 forKeyPath:@"conditionCode"
                 options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
                 context:NULL];
+            [self.currentCity addObserver:self
+                forKeyPath:@"windSpeed"
+                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                context:NULL];
+            [self.currentCity addObserver:self
+                forKeyPath:@"windDirection"
+                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                context:NULL];
 
             // Add observer for device wake notification
             [[NSNotificationCenter defaultCenter] addObserver:self
@@ -181,6 +191,8 @@ enum ConditionCode {
     [self.currentCity removeObserver:self forKeyPath:@"feelsLike"];
     [self.currentCity removeObserver:self forKeyPath:@"location"];
     [self.currentCity removeObserver:self forKeyPath:@"conditionCode"];
+    [self.currentCity removeObserver:self forKeyPath:@"windSpeed"];
+    [self.currentCity removeObserver:self forKeyPath:@"windDirection"];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:DEVICE_WAKE_NOTIFICATION object:nil];
 }
 
@@ -304,6 +316,8 @@ enum ConditionCode {
                       ofObject:(id)object
                         change:(NSDictionary<NSKeyValueChangeKey,id> *)change
                        context:(void *)context {
+    method_log(@"keyPath: %@, object: %@, change: %@, context: %@", keyPath, object, change, context);
+    
     // If the old and new values are the same, do nothing
     if (change[NSKeyValueChangeOldKey] == change[NSKeyValueChangeNewKey])
         return;
@@ -320,6 +334,12 @@ enum ConditionCode {
     } else if ([keyPath isEqualToString:@"conditionCode"]) {
         // The conditionCode has changed
         [[NSNotificationCenter defaultCenter] postNotificationName:CONDITION_CHANGE_NOTIFICATION object:self];
+    } else if ([keyPath isEqualToString:@"windSpeed"]) {
+        // The windSpeed has changed
+        [[NSNotificationCenter defaultCenter] postNotificationName:WIND_SPEED_CHANGE_NOTIFICATION object:self];
+    } else if ([keyPath isEqualToString:@"windDirection"]) {
+        // The windDirection has changed
+        [[NSNotificationCenter defaultCenter] postNotificationName:WIND_DIRECTION_CHANGE_NOTIFICATION object:self];
     }
 }
 
