@@ -6,6 +6,9 @@
 
 #define DEGREE_SYMBOL @"\u00B0"
 
+// Define this because apple doesn't have it public anymore
+#define NSLocaleTemperatureUnit @"kCFLocaleTemperatureUnitKey"
+
 // external
 #define TEMPERATURE_CHANGE_NOTIFICATION             @"kDCWeatherTemperatureChange"
 #define FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION  @"kDCWeatherFeelsLikeTemperatureChange"
@@ -127,6 +130,13 @@ enum ConditionCode {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             // Force a new location update if possible
             [self.weatherLocationManager forceLocationUpdate];
+
+            // Cache the current locale and add an observer for locale changes so we can update units
+            self.cachedLocale = [NSLocale currentLocale];
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                  selector:@selector(localeDidChange:)
+                                                  name:NSCurrentLocaleDidChangeNotification
+                                                  object:nil];
 
             // Get the local weather city and update it
             WeatherPreferences *weatherPreferences = [[WeatherPreferences alloc] init];
@@ -310,6 +320,33 @@ enum ConditionCode {
     // Set the speed unit
     method_log(@"unit: %d", unit);
     _speedUnit = unit;
+}
+
+- (void)localeDidChange:(NSNotification *)notification {
+    method_log(@"notification: %@", notification);
+
+    // Check if temperature unit has changed
+    if (self.temperatureUnit == SystemTemperatureUnit) { // If the temperature unit is currently overridden, then we don't care
+        if (![[self.cachedLocale objectForKey:NSLocaleTemperatureUnit] isEqualToString:[[NSLocale currentLocale] objectForKey:NSLocaleTemperatureUnit]]) {
+            // Send temperature change notification because unit changed
+            [[NSNotificationCenter defaultCenter] postNotificationName:TEMPERATURE_CHANGE_NOTIFICATION object:self];
+
+            // Send feels like temperature change notification because unit changed
+            [[NSNotificationCenter defaultCenter] postNotificationName:FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION object:self];
+        }
+    }
+
+    // Check if the measurement system has changed
+    if (self.speedUnit == SystemSpeedUnit) { // If the speed unit is currently overridden, then we don't care
+        if (![[self.cachedLocale objectForKey:NSLocaleMeasurementSystem] isEqualToString:[[NSLocale currentLocale] objectForKey:NSLocaleMeasurementSystem]]) {
+            // The measurement system has changed, which means the speed unit has changed as a result
+            // Send wind speed change notification because unit changed
+            [[NSNotificationCenter defaultCenter] postNotificationName:WIND_SPEED_CHANGE_NOTIFICATION object:self];
+        }
+    }
+
+    // Update the cached locale even if the units we care about haven't changed
+    self.cachedLocale = [NSLocale currentLocale];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
