@@ -139,9 +139,9 @@ enum ConditionCode {
                                                   object:nil];
 
             // Get the local weather city and update it
-            WeatherPreferences *weatherPreferences = [[WeatherPreferences alloc] init];
-            [weatherPreferences setLocalWeatherEnabled:YES];
-            self.currentCity = [weatherPreferences localWeatherCity];
+            self.weatherPreferences = [WeatherPreferences sharedPreferences];
+            [self.weatherPreferences setLocalWeatherEnabled:YES];
+            self.currentCity = [self.weatherPreferences localWeatherCity];
 
             // Secondary check for current city, as we have a fallback method of getting it, specifically for versions lower than iOS 16 where it broke
             if (!self.currentCity) {
@@ -210,7 +210,7 @@ enum ConditionCode {
     method_log();
 
     // Check if local weather is enabled and location services are enabled
-    if (![[WeatherPreferences sharedPreferences] isLocalWeatherEnabled] || ![CLLocationManager locationServicesEnabled]) {
+    if (![self.weatherPreferences isLocalWeatherEnabled] || ![CLLocationManager locationServicesEnabled]) {
         //debug_log("Location services are not enabled");
         return NO;
     }
@@ -297,7 +297,7 @@ enum ConditionCode {
 - (enum TemperatureUnit)userTemperatureUnit {
     // Get the user's temperature unit
     method_log();
-    if ([[objc_getClass("WeatherPreferences") sharedPreferences] isCelsius])
+    if ([self.weatherPreferences isCelsius])
         return Celsius;
     return Fahrenheit;
 }

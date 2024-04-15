@@ -15,8 +15,10 @@
 @property (nonatomic, strong) City *currentCity;
 @property (nonatomic, strong) CLLocation *currentLocation; 
 @property (nonatomic, strong) WeatherLocationManager* weatherLocationManager;
+@property (nonatomic, strong) WeatherPreferences* weatherPreferences;
 @property (nonatomic, strong) NSTimer *updateTimer;
 @property (nonatomic, retain) NSDate *nextUpdateTime;
+@property (nonatomic, strong) NSLocale *cachedLocale;
 @property (nonatomic) BOOL conditionIncludesSevereWeather;
 @property (nonatomic) enum TemperatureUnit temperatureUnit;
 @property (nonatomic) enum SpeedUnit speedUnit;
