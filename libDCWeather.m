@@ -379,22 +379,94 @@ enum ConditionCode {
 
     if ([keyPath isEqualToString:@"temperature"]) {
         // The temperature has changed
-        [[NSNotificationCenter defaultCenter] postNotificationName:TEMPERATURE_CHANGE_NOTIFICATION object:self];
+        if ([change[NSKeyValueChangeOldKey] isKindOfClass:[NSNull class]] && [change[NSKeyValueChangeNewKey] isKindOfClass:objc_getClass("WFTemperature")]) {
+            // If the old temperature is null
+            debug_log(@"temperature changed ... old: (null), new: %@", change[NSKeyValueChangeNewKey]);
+            [[NSNotificationCenter defaultCenter] postNotificationName:TEMPERATURE_CHANGE_NOTIFICATION object:self];
+        } else if ([change[NSKeyValueChangeNewKey] isKindOfClass:[NSNull class]] || change[NSKeyValueChangeNewKey] == [NSNull null]) {
+            // If the new temperature is null
+            return;
+        } else {
+            WFTemperature *oldTemperature = change[NSKeyValueChangeOldKey];
+            WFTemperature *newTemperature = change[NSKeyValueChangeNewKey];
+
+            if (oldTemperature.celsius != newTemperature.celsius || oldTemperature.fahrenheit != newTemperature.fahrenheit || oldTemperature.kelvin != newTemperature.kelvin) {
+                // The temperature has changed
+                debug_log(@"temperature changed ... old: %@, new: %@", change[NSKeyValueChangeOldKey], change[NSKeyValueChangeNewKey]);
+                [[NSNotificationCenter defaultCenter] postNotificationName:TEMPERATURE_CHANGE_NOTIFICATION object:self];
+            } else {
+                // The temperature has not changed
+                return;
+            }
+        }     
     } else if ([keyPath isEqualToString:@"feelsLike"]) {
-        // The feelsLike temperature has changed
-        [[NSNotificationCenter defaultCenter] postNotificationName:FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION object:self];
+        if ([change[NSKeyValueChangeOldKey] isKindOfClass:[NSNull class]] && [change[NSKeyValueChangeNewKey] isKindOfClass:objc_getClass("WFTemperature")]) {
+            // If the old feelsLike temperature is null
+            debug_log(@"feels like temperature changed ... old: (null), new: %@", change[NSKeyValueChangeNewKey]);
+            [[NSNotificationCenter defaultCenter] postNotificationName:FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION object:self];
+        } else if ([change[NSKeyValueChangeNewKey] isKindOfClass:[NSNull class]] || change[NSKeyValueChangeNewKey] == [NSNull null]) {
+            // If the new feelsLike temperature is null
+            return;
+        } else {
+            WFTemperature *oldTemperature = change[NSKeyValueChangeOldKey];
+            WFTemperature *newTemperature = change[NSKeyValueChangeNewKey];
+
+            if (oldTemperature.celsius != newTemperature.celsius || oldTemperature.fahrenheit != newTemperature.fahrenheit || oldTemperature.kelvin != newTemperature.kelvin) {
+                // The feelsLike temperature has changed
+                debug_log(@"feels like temperature changed ... old: %@, new: %@", change[NSKeyValueChangeOldKey], change[NSKeyValueChangeNewKey]);
+                [[NSNotificationCenter defaultCenter] postNotificationName:FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION object:self];
+            } else {
+                // The feelsLike temperature has not changed
+                return;
+            }
+        }
     } else if ([keyPath isEqualToString:@"location"]) {
-        // The location has changed
-        [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
+        if ([change[NSKeyValueChangeOldKey] isKindOfClass:[NSNull class]] && [change[NSKeyValueChangeNewKey] isKindOfClass:objc_getClass("CLLocation")]) {
+            // If the old location is null
+            debug_log(@"location changed ... old: (null), new: %@", change[NSKeyValueChangeNewKey]);
+            [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
+        } else if ([change[NSKeyValueChangeNewKey] isKindOfClass:[NSNull class]] || change[NSKeyValueChangeNewKey] == [NSNull null]) {
+            // If the new location is null
+            return;
+        } else {
+            CLLocation *oldLocation = change[NSKeyValueChangeOldKey];
+            CLLocation *newLocation = change[NSKeyValueChangeNewKey];
+
+            if ([oldLocation distanceFromLocation:newLocation] > [self.distanceThreshold meters]) {
+                // The location has changed
+                debug_log(@"location changed ... old: %@, new: %@", change[NSKeyValueChangeOldKey], change[NSKeyValueChangeNewKey]);
+                [[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
+            } else {
+                // The location has not changed
+                return;
+            }
+        }
     } else if ([keyPath isEqualToString:@"conditionCode"]) {
+        if ([change[NSKeyValueChangeNewKey] isKindOfClass:[NSNull class]] || change[NSKeyValueChangeNewKey] == [NSNull null]) {
+            // If the new conditionCode is null
+            return;
+        }
         // The conditionCode has changed
+        debug_log(@"condition code changed ... old: %@, new: %@", change[NSKeyValueChangeOldKey], change[NSKeyValueChangeNewKey]);
         [[NSNotificationCenter defaultCenter] postNotificationName:CONDITION_CHANGE_NOTIFICATION object:self];
     } else if ([keyPath isEqualToString:@"windSpeed"]) {
+        if ([change[NSKeyValueChangeNewKey] isKindOfClass:[NSNull class]] || change[NSKeyValueChangeNewKey] == [NSNull null]) {
+            // If the new windSpeed is null
+            return;
+        }
         // The windSpeed has changed
+        debug_log(@"wind speed changed ... old: %@, new: %@", change[NSKeyValueChangeOldKey], change[NSKeyValueChangeNewKey]);
         [[NSNotificationCenter defaultCenter] postNotificationName:WIND_SPEED_CHANGE_NOTIFICATION object:self];
     } else if ([keyPath isEqualToString:@"windDirection"]) {
+        if ([change[NSKeyValueChangeNewKey] isKindOfClass:[NSNull class]] || change[NSKeyValueChangeNewKey] == [NSNull null]) {
+            // If the new windDirection is null
+            return;
+        }
         // The windDirection has changed
+        debug_log(@"wind direction changed ... old: %@, new: %@", change[NSKeyValueChangeOldKey], change[NSKeyValueChangeNewKey]);
         [[NSNotificationCenter defaultCenter] postNotificationName:WIND_DIRECTION_CHANGE_NOTIFICATION object:self];
+    } else {
+        return;
     }
     
     // Send generic change notification
