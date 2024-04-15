@@ -134,6 +134,13 @@ enum ConditionCode {
         if ([self.weatherLocationManager respondsToSelector:@selector(setLocationTrackingReady:activelyTracking:watchKitExtension:)])
             [self.weatherLocationManager setLocationTrackingReady:YES activelyTracking:NO watchKitExtension:NO];
 
+        //[[CLLocationManager sharedManager] setAllowsBackgroundLocationUpdates:YES];
+        //[[CLLocationManager sharedManager] setPausesLocationUpdatesAutomatically:NO];
+        //[[CLLocationManager sharedManager] setDesiredAccuracy:kCLLocationAccuracyThreeKilometers];
+        //[[CLLocationManager sharedManager] setDistanceFilter:1000.0];
+        //[[CLLocationManager sharedManager] setDelegate:self];
+        //[[CLLocationManager sharedManager] startUpdatingLocation];
+
         // Refresh the location and weather, plus add observers
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
             // Force a new location update if possible
@@ -163,9 +170,23 @@ enum ConditionCode {
                 }
             }
 
+            // Another method to get the city
+            if (!self.currentCity) {
+                WATodayAutoupdatingLocationModel *todayModel = [[objc_getClass("WATodayAutoupdatingLocationModel") alloc] init];
+                [todayModel setPreferences:self.weatherPreferences];
+                self.currentCity = todayModel.forecastModel.city;
+                log_if_null(self.currentCity);
+            }
+
             [self.currentCity update];
 
-            // Add observers
+            // Add observers for getting the current city after an update
+            [self.weatherPreferences addObserver:self
+                forKeyPath:@"localWeatherCity"
+                options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                context:NULL];
+
+            // Add observers for current city
             [self.currentCity addObserver:self
                 forKeyPath:@"temperature"
                 options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
@@ -209,6 +230,7 @@ enum ConditionCode {
 
 - (void)dealloc {
     // Remove observers
+    [self.weatherPreferences removeObserver:self forKeyPath:@"localWeatherCity"];
     [self.currentCity removeObserver:self forKeyPath:@"temperature"];
     [self.currentCity removeObserver:self forKeyPath:@"feelsLike"];
     [self.currentCity removeObserver:self forKeyPath:@"location"];
@@ -465,10 +487,17 @@ enum ConditionCode {
         // The windDirection has changed
         debug_log(@"wind direction changed ... old: %@, new: %@", change[NSKeyValueChangeOldKey], change[NSKeyValueChangeNewKey]);
         [[NSNotificationCenter defaultCenter] postNotificationName:WIND_DIRECTION_CHANGE_NOTIFICATION object:self];
+    } else if ([keyPath isEqualToString:@"localWeatherCity"]) {
+        // The localWeatherCity has changed
+        debug_log("localWeatherCity changed");
+        self.currentCity = change[NSKeyValueChangeNewKey];
+        //[self.currentCity update];
+        //[[NSNotificationCenter defaultCenter] postNotificationName:LOCATION_CHANGE_NOTIFICATION object:self];
+        return;
     } else {
         return;
     }
-    
+
     // Send generic change notification
     debug_log("Sending generic change notification");
     [[NSNotificationCenter defaultCenter] postNotificationName:CHANGE_NOTIFICATION object:self];
@@ -517,8 +546,41 @@ enum ConditionCode {
     log_if_null(self.currentCity);
     log_if_null(self.currentCity.location);
 
-    // Refresh the weather
-    [self _refreshWeatherWithLocation:self.currentCity.location];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        if (!self.currentCity) {
+            self.currentCity = [self.weatherPreferences localWeatherCity];
+            log_if_null(self.currentCity);
+
+            // Secondary check for current city, as we have a fallback method of getting it, specifically for versions lower than iOS 16 where it broke
+            if (!self.currentCity) {
+                TWCLocationUpdater *locationUpdater = [objc_getClass("TWCLocationUpdater") sharedLocationUpdater];
+                log_if_null(locationUpdater);
+                if ([locationUpdater respondsToSelector:@selector(currentCity)]) {
+                    self.currentCity = [locationUpdater currentCity];
+                    log_if_null(self.currentCity);
+                }
+            }
+
+            if (self.currentCity)
+                [self.currentCity update];
+        }
+
+        if (!self.currentCity) {
+            // Another method to get the current city
+            WATodayAutoupdatingLocationModel *todayModel = [[objc_getClass("WATodayAutoupdatingLocationModel") alloc] init];
+            [todayModel setPreferences:self.weatherPreferences];
+            self.currentCity = todayModel.forecastModel.city;
+            log_if_null(self.currentCity);
+
+            if (self.currentCity)
+                [self.currentCity update];
+        }
+
+        // Refresh the weather
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _refreshWeatherWithLocation:self.currentCity.location];
+        });
+    });
 }
 
 - (void)_refreshWeatherWithLocation:(CLLocation*)location {
@@ -871,6 +933,44 @@ enum ConditionCode {
         default:
             return [UIImage systemImageNamed:@"questionmark.circle.fill"];
     }
+}
+
+- (NSString *)windChillString {
+    method_log();
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return @"Wind Chill Not Available";
+
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the wind chill is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return @"Wind Chill Not Available";
+
+    debug_log(@"Wind Chill: %.0f", self.currentCity.windChill);
+    return [NSString stringWithFormat:@"%.0f%@", self.currentCity.windChill, DEGREE_SYMBOL];
+
+    // Create a DCTemperature object and return the wind chill in the user's unit
+    //DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity windChill].fahrenheit];
+    //return [NSString stringWithFormat:@"%.0f%@", [temperature temperatureInUnit:self.temperatureUnit], DEGREE_SYMBOL];
+}
+
+- (double)windChill {
+    method_log();
+
+    // Check if location services are enabled
+    if (![self locationServicesEnabled])
+        return 0;
+
+    // Check if the temperature is 0 and the condition is Tornado, which indicates that the wind chill is not available
+    if (self.currentCity.temperature.fahrenheit == 0 && self.currentCity.conditionCode == Tornado)
+        return 0;
+
+    debug_log(@"Wind Chill: %.0f", self.currentCity.windChill);
+    return self.currentCity.windChill;
+
+    // Create a DCTemperature object and return the wind chill in the user's unit
+    //DCTemperature *temperature = [[DCTemperature alloc] init:[self.currentCity windChill].fahrenheit];
+    //return [temperature temperatureInUnit:self.temperatureUnit];
 }
 
 - (NSString *)windSpeedString {
