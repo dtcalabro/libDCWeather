@@ -232,9 +232,15 @@ NSString *city = [weather cityString];
 
 ### How to listen for updates
 
-You can listen for updates by adding an observer to the default notification center. Currently, you can listen for the temperature, feels like temperature, location, and condition changes.
+You can listen for updates by adding an observer to the default notification center. Currently, you can listen for the temperature, feels like temperature, location, condition, wind speed, and wind direction changes.
 
 ```objc
+// Assuming you wish to invoke the weatherChanged method when the weather changes
+[[NSNotificationCenter defaultCenter] addObserver:self
+                                      selector:@selector(weatherChanged)
+                                      name:@"kDCWeatherChange"
+                                      object:nil];
+
 // Assuming you wish to invoke the temperatureChanged method when the temperature changes
 [[NSNotificationCenter defaultCenter] addObserver:self
                                       selector:@selector(temperatureChanged)

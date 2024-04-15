@@ -10,6 +10,7 @@
 #define NSLocaleTemperatureUnit @"kCFLocaleTemperatureUnitKey"
 
 // external
+#define CHANGE_NOTIFICATION                         @"kDCWeatherChange"
 #define TEMPERATURE_CHANGE_NOTIFICATION             @"kDCWeatherTemperatureChange"
 #define FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION  @"kDCWeatherFeelsLikeTemperatureChange"
 #define LOCATION_CHANGE_NOTIFICATION                @"kDCWeatherLocationChange"
@@ -344,6 +345,9 @@ enum ConditionCode {
 
             // Send feels like temperature change notification because unit changed
             [[NSNotificationCenter defaultCenter] postNotificationName:FEELS_LIKE_TEMPERATURE_CHANGE_NOTIFICATION object:self];
+
+            // Send generic change notification because unit changed
+            [[NSNotificationCenter defaultCenter] postNotificationName:CHANGE_NOTIFICATION object:self];
         }
     }
 
@@ -353,6 +357,9 @@ enum ConditionCode {
             // The measurement system has changed, which means the speed unit has changed as a result
             // Send wind speed change notification because unit changed
             [[NSNotificationCenter defaultCenter] postNotificationName:WIND_SPEED_CHANGE_NOTIFICATION object:self];
+
+            // Send generic change notification because unit changed
+            [[NSNotificationCenter defaultCenter] postNotificationName:CHANGE_NOTIFICATION object:self];
         }
     }
 
@@ -389,6 +396,10 @@ enum ConditionCode {
         // The windDirection has changed
         [[NSNotificationCenter defaultCenter] postNotificationName:WIND_DIRECTION_CHANGE_NOTIFICATION object:self];
     }
+    
+    // Send generic change notification
+    debug_log("Sending generic change notification");
+    [[NSNotificationCenter defaultCenter] postNotificationName:CHANGE_NOTIFICATION object:self];
 }
 
 - (void)requestRefresh {
